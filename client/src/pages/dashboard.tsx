@@ -5,23 +5,30 @@ import { Button } from "@/components/ui/button";
 import { Play, Users, BarChart3, TrendingUp, Plus } from "lucide-react";
 import { Link } from "wouter";
 import CreateSeriesModal from "@/components/modals/create-series-modal";
+import { Series, Match, Team } from "@shared/schema";
 
 export default function Dashboard() {
   const [showCreateSeriesModal, setShowCreateSeriesModal] = useState(false);
   
-  const { data: activeSeries } = useQuery({
+  const { data: activeSeries, isLoading: isLoadingActiveSeries } = useQuery<Series>({
     queryKey: ["/api/series/active"],
   });
 
-  const { data: seriesProgress } = useQuery({
-    queryKey: ["/api/series", activeSeries?.id, "progress"],
+  const { data: seriesProgress } = useQuery<{ team1Wins: number; team2Wins: number; team1: Team; team2: Team }>({
+    queryKey: [`/api/series/${activeSeries?.id}/progress`],
     enabled: !!activeSeries?.id,
   });
 
-  const { data: recentMatches } = useQuery({
-    queryKey: ["/api/series", activeSeries?.id, "recent-matches"],
+  const { data: recentMatches } = useQuery<Match[]>({
+    queryKey: [`/api/series/${activeSeries?.id}/recent-matches`],
     enabled: !!activeSeries?.id,
   });
+
+  if (isLoadingActiveSeries) {
+    return <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="text-center">Loading...</div>
+    </div>;
+  }
 
   if (!activeSeries) {
     return (

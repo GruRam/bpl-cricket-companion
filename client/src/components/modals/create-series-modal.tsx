@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,9 +22,12 @@ export default function CreateSeriesModal({ isOpen, onClose }: CreateSeriesModal
 
   const createSeriesMutation = useMutation({
     mutationFn: async (data: { series: InsertSeries; team1Name: string; team2Name: string }) => {
+      console.log("Creating series with data:", data);
+      
       // Create series first
       const seriesResponse = await apiRequest("POST", "/api/series", data.series);
       const series = await seriesResponse.json();
+      console.log("Series created:", series);
       
       // Create teams for the series
       await apiRequest("POST", "/api/teams", {
@@ -39,6 +42,7 @@ export default function CreateSeriesModal({ isOpen, onClose }: CreateSeriesModal
         captainId: null
       });
       
+      console.log("Teams created successfully");
       return series;
     },
     onSuccess: () => {
@@ -49,10 +53,11 @@ export default function CreateSeriesModal({ isOpen, onClose }: CreateSeriesModal
       });
       handleClose();
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error("Series creation error:", error);
       toast({
         title: "Error",
-        description: "Failed to create series",
+        description: `Failed to create series: ${error.message}`,
         variant: "destructive",
       });
     },
@@ -86,6 +91,9 @@ export default function CreateSeriesModal({ isOpen, onClose }: CreateSeriesModal
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Create New Series</DialogTitle>
+          <DialogDescription>
+            Set up a new cricket series with two teams. The first team to reach the target wins will win the series.
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

@@ -1,0 +1,141 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(0, 0%, 100%);
+  --foreground: hsl(20, 14.3%, 4.1%);
+  --muted: hsl(60, 4.8%, 95.9%);
+  --muted-foreground: hsl(25, 5.3%, 44.7%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(20, 14.3%, 4.1%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(20, 14.3%, 4.1%);
+  --border: hsl(20, 5.9%, 90%);
+  --input: hsl(20, 5.9%, 90%);
+  --primary: hsl(267, 82%, 74%);
+  --primary-foreground: hsl(211, 100%, 99%);
+  --secondary: hsl(60, 4.8%, 95.9%);
+  --secondary-foreground: hsl(24, 9.8%, 10%);
+  --accent: hsl(60, 4.8%, 95.9%);
+  --accent-foreground: hsl(24, 9.8%, 10%);
+  --destructive: hsl(0, 84.2%, 60.2%);
+  --destructive-foreground: hsl(60, 9.1%, 97.8%);
+  --ring: hsl(20, 14.3%, 4.1%);
+  --radius: 0.5rem;
+  
+  /* Pastel colors */
+  --pastel-purple: hsl(267, 82%, 74%);
+  --pastel-green: hsl(158, 64%, 68%);
+  --pastel-coral: hsl(0, 84%, 79%);
+  --pastel-blue: hsl(199, 89%, 73%);
+  --pastel-yellow: hsl(48, 97%, 77%);
+  --soft-gray: hsl(210, 20%, 98%);
+  --warm-gray: hsl(220, 13%, 91%);
+}
+
+.dark {
+  --background: hsl(240, 10%, 3.9%);
+  --foreground: hsl(0, 0%, 98%);
+  --muted: hsl(240, 3.7%, 15.9%);
+  --muted-foreground: hsl(240, 5%, 64.9%);
+  --popover: hsl(240, 10%, 3.9%);
+  --popover-foreground: hsl(0, 0%, 98%);
+  --card: hsl(240, 10%, 3.9%);
+  --card-foreground: hsl(0, 0%, 98%);
+  --border: hsl(240, 3.7%, 15.9%);
+  --input: hsl(240, 3.7%, 15.9%);
+  --primary: hsl(267, 82%, 74%);
+  --primary-foreground: hsl(211, 100%, 99%);
+  --secondary: hsl(240, 3.7%, 15.9%);
+  --secondary-foreground: hsl(0, 0%, 98%);
+  --accent: hsl(240, 3.7%, 15.9%);
+  --accent-foreground: hsl(0, 0%, 98%);
+  --destructive: hsl(0, 62.8%, 30.6%);
+  --destructive-foreground: hsl(0, 0%, 98%);
+  --ring: hsl(240, 4.9%, 83.9%);
+  --radius: 0.5rem;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased;
+    background-color: var(--soft-gray);
+    color: var(--foreground);
+  }
+}
+
+@layer utilities {
+  .pastel-purple {
+    background-color: var(--pastel-purple);
+  }
+  
+  .pastel-green {
+    background-color: var(--pastel-green);
+  }
+  
+  .pastel-coral {
+    background-color: var(--pastel-coral);
+  }
+  
+  .pastel-blue {
+    background-color: var(--pastel-blue);
+  }
+  
+  .pastel-yellow {
+    background-color: var(--pastel-yellow);
+  }
+  
+  .soft-gray {
+    background-color: var(--soft-gray);
+  }
+  
+  .warm-gray {
+    background-color: var(--warm-gray);
+  }
+}
+
+.tab-button {
+  @apply transition-all duration-200 border-2 border-transparent;
+}
+
+.tab-button.active {
+  background: linear-gradient(135deg, var(--pastel-purple), var(--pastel-blue));
+  color: white;
+}
+
+.tab-button:not(.active) {
+  @apply bg-gray-100 text-gray-600;
+}
+
+.tab-button:not(.active):hover {
+  @apply bg-gray-200 text-gray-700;
+}
+
+.ball-entry:hover {
+  @apply transform -translate-y-1 shadow-lg;
+}
+
+.quick-entry:hover {
+  @apply transform -translate-y-1 shadow-lg;
+}
+
+.dismissal-type:hover {
+  @apply transform -translate-y-0.5;
+}
+
+.modal-overlay {
+  @apply fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4;
+}
+
+.modal-content {
+  @apply max-h-[90vh] overflow-y-auto w-full;
+}
+
+.cricket-gradient {
+  background: linear-gradient(135deg, var(--pastel-purple), var(--pastel-blue));
+}

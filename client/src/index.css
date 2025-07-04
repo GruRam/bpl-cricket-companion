@@ -104,16 +104,11 @@
 }
 
 .tab-button.active {
-  background: linear-gradient(135deg, var(--pastel-purple), var(--pastel-blue));
-  color: white;
+  @apply bg-white text-purple-700 border-purple-200 shadow-md;
 }
 
 .tab-button:not(.active) {
-  @apply bg-gray-100 text-gray-600;
-}
-
-.tab-button:not(.active):hover {
-  @apply bg-gray-200 text-gray-700;
+  @apply bg-transparent text-gray-600 hover:bg-white/50 hover:text-gray-800;
 }
 
 .ball-entry:hover {

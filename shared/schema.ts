@@ -6,7 +6,6 @@ import { z } from "zod";
 export const players = pgTable("players", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
-  position: text("position").notNull(), // All-Rounder, Batsman, Bowler
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
 });

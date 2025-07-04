@@ -16,7 +16,6 @@ interface AddPlayerModalProps {
 
 export default function AddPlayerModal({ isOpen, onClose }: AddPlayerModalProps) {
   const [name, setName] = useState("");
-  const [position, setPosition] = useState("");
   const { toast } = useToast();
 
   const addPlayerMutation = useMutation({
@@ -43,18 +42,16 @@ export default function AddPlayerModal({ isOpen, onClose }: AddPlayerModalProps)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !position) return;
+    if (!name) return;
 
     addPlayerMutation.mutate({
       name,
-      position,
       isActive: true,
     });
   };
 
   const handleClose = () => {
     setName("");
-    setPosition("");
     onClose();
   };
 
@@ -75,27 +72,14 @@ export default function AddPlayerModal({ isOpen, onClose }: AddPlayerModalProps)
               required
             />
           </div>
-          <div>
-            <Label>Position</Label>
-            <Select value={position} onValueChange={setPosition}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select position" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Batsman">Batsman</SelectItem>
-                <SelectItem value="Bowler">Bowler</SelectItem>
-                <SelectItem value="All-Rounder">All-Rounder</SelectItem>
-                <SelectItem value="Wicket-Keeper">Wicket-Keeper</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+
           <div className="flex justify-end space-x-3">
             <Button type="button" variant="outline" onClick={handleClose}>
               Cancel
             </Button>
             <Button
               type="submit"
-              disabled={addPlayerMutation.isPending || !name || !position}
+              disabled={addPlayerMutation.isPending || !name}
               className="bg-purple-600 hover:bg-purple-700"
             >
               {addPlayerMutation.isPending ? "Adding..." : "Add Player"}

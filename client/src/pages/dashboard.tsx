@@ -1,10 +1,14 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Play, Users, BarChart3, TrendingUp } from "lucide-react";
+import { Play, Users, BarChart3, TrendingUp, Plus } from "lucide-react";
 import { Link } from "wouter";
+import CreateSeriesModal from "@/components/modals/create-series-modal";
 
 export default function Dashboard() {
+  const [showCreateSeriesModal, setShowCreateSeriesModal] = useState(false);
+  
   const { data: activeSeries } = useQuery({
     queryKey: ["/api/series/active"],
   });
@@ -25,7 +29,11 @@ export default function Dashboard() {
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-800 mb-4">No Active Series</h2>
           <p className="text-gray-600 mb-6">Create a new series to get started</p>
-          <Button className="cricket-gradient text-white">
+          <Button 
+            onClick={() => setShowCreateSeriesModal(true)}
+            className="cricket-gradient text-white"
+          >
+            <Plus className="w-4 h-4 mr-2" />
             Create New Series
           </Button>
         </div>
@@ -169,6 +177,11 @@ export default function Dashboard() {
           )}
         </CardContent>
       </Card>
+      
+      <CreateSeriesModal
+        isOpen={showCreateSeriesModal}
+        onClose={() => setShowCreateSeriesModal(false)}
+      />
     </div>
   );
 }

@@ -12,8 +12,6 @@ import type { CurrentMatch } from "@/lib/types";
 
 export default function Match() {
   const [matchStarted, setMatchStarted] = useState(false);
-  const [team1Name, setTeam1Name] = useState("");
-  const [team2Name, setTeam2Name] = useState("");
   const [firstBattingTeam, setFirstBattingTeam] = useState("");
   const [showWicketModal, setShowWicketModal] = useState(false);
   const [currentMatch, setCurrentMatch] = useState<CurrentMatch | null>(null);
@@ -22,16 +20,24 @@ export default function Match() {
     queryKey: ["/api/series/active"],
   });
 
-  const handleStartMatch = () => {
-    if (!team1Name || !team2Name || !firstBattingTeam) return;
+  const { data: teams } = useQuery({
+    queryKey: ["/api/series", activeSeries?.id, "teams"],
+    enabled: !!activeSeries?.id,
+  });
 
+  const handleStartMatch = () => {
+    if (!teams || teams.length < 2 || !firstBattingTeam) return;
+
+    const team1 = teams[0];
+    const team2 = teams[1];
+    
     const match: CurrentMatch = {
       id: Date.now(), // Temporary ID
-      team1: { id: 1, name: team1Name },
-      team2: { id: 2, name: team2Name },
+      team1: { id: team1.id, name: team1.name },
+      team2: { id: team2.id, name: team2.name },
       currentInnings: 1,
-      battingTeam: firstBattingTeam === "team1" ? { id: 1, name: team1Name } : { id: 2, name: team2Name },
-      bowlingTeam: firstBattingTeam === "team1" ? { id: 2, name: team2Name } : { id: 1, name: team1Name },
+      battingTeam: firstBattingTeam === "team1" ? { id: team1.id, name: team1.name } : { id: team2.id, name: team2.name },
+      bowlingTeam: firstBattingTeam === "team1" ? { id: team2.id, name: team2.name } : { id: team1.id, name: team1.name },
       score: { runs: 0, wickets: 0, overs: 0, balls: 0 },
       currentOver: 1,
       currentBall: 1,
@@ -70,56 +76,46 @@ export default function Match() {
           </div>
 
           <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="team1" className="text-sm font-medium text-gray-700 mb-2">
-                  Team 1 Name
-                </Label>
-                <Input
-                  id="team1"
-                  value={team1Name}
-                  onChange={(e) => setTeam1Name(e.target.value)}
-                  placeholder="Enter team 1 name"
-                  className="w-full"
-                />
-              </div>
-              <div>
-                <Label htmlFor="team2" className="text-sm font-medium text-gray-700 mb-2">
-                  Team 2 Name
-                </Label>
-                <Input
-                  id="team2"
-                  value={team2Name}
-                  onChange={(e) => setTeam2Name(e.target.value)}
-                  placeholder="Enter team 2 name"
-                  className="w-full"
-                />
-              </div>
-            </div>
+            {teams && teams.length >= 2 && (
+              <>
+                <div className="text-center mb-6">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                    {teams[0].name} vs {teams[1].name}
+                  </h3>
+                  <p className="text-gray-600">Select which team bats first</p>
+                </div>
 
-            <div>
-              <Label className="text-sm font-medium text-gray-700 mb-2">
-                First Batting Team
-              </Label>
-              <Select value={firstBattingTeam} onValueChange={setFirstBattingTeam}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select first batting team" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="team1">{team1Name || "Team 1"}</SelectItem>
-                  <SelectItem value="team2">{team2Name || "Team 2"}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2">
+                    First Batting Team
+                  </Label>
+                  <Select value={firstBattingTeam} onValueChange={setFirstBattingTeam}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select first batting team" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="team1">{teams[0].name}</SelectItem>
+                      <SelectItem value="team2">{teams[1].name}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-            <Button
-              onClick={handleStartMatch}
-              disabled={!team1Name || !team2Name || !firstBattingTeam}
-              className="w-full bg-green-600 hover:bg-green-700 text-white py-3"
-            >
-              <Play className="w-4 h-4 mr-2" />
-              Start Match
-            </Button>
+                <Button
+                  onClick={handleStartMatch}
+                  disabled={!firstBattingTeam}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white py-3"
+                >
+                  <Play className="w-4 h-4 mr-2" />
+                  Start Match
+                </Button>
+              </>
+            )}
+            
+            {(!teams || teams.length < 2) && (
+              <div className="text-center py-8">
+                <p className="text-gray-600">No teams found for this series. Please set up teams first.</p>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

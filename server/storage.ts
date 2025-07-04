@@ -194,11 +194,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getPlayerStats(playerId: number, seriesId?: number): Promise<PlayerStats[]> {
-    const query = db.select().from(playerStats).where(eq(playerStats.playerId, playerId));
     if (seriesId) {
-      query.where(eq(playerStats.seriesId, seriesId));
+      return await db.select().from(playerStats)
+        .where(and(eq(playerStats.playerId, playerId), eq(playerStats.seriesId, seriesId)));
+    } else {
+      return await db.select().from(playerStats).where(eq(playerStats.playerId, playerId));
     }
-    return await query;
   }
 
   async updatePlayerStats(playerId: number, seriesId: number, updates: Partial<PlayerStats>): Promise<void> {

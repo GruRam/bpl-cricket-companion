@@ -105,4 +105,15 @@ Preferred communication style: Simple, everyday language.
 ```
 Changelog:
 - July 04, 2025. Initial setup
+- July 04, 2025. Enhanced cricket scoring app with:
+  * Updated navigation tabs with cleaner styling
+  * Added series creation functionality with team setup
+  * Removed position field from players (name only)
+  * Added player name editing capability
+  * Simplified match setup to use series team names
+  * Enhanced ball-by-ball scorer with player selection dropdowns
+  * Added ball editing/deletion functionality
+  * Improved quick entry buttons with all run options (0-6)
+  * Added batsman swap functionality
+  * Integrated bowler selection for each over
 ```

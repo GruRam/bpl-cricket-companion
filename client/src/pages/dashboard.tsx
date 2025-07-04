@@ -5,10 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Play, Users, BarChart3, TrendingUp, Plus } from "lucide-react";
 import { Link } from "wouter";
 import CreateSeriesModal from "@/components/modals/create-series-modal";
+import TeamSetupModal from "@/components/modals/team-setup-modal";
 import { Series, Match, Team } from "@shared/schema";
 
 export default function Dashboard() {
   const [showCreateSeriesModal, setShowCreateSeriesModal] = useState(false);
+  const [showTeamSetupModal, setShowTeamSetupModal] = useState(false);
   
   const { data: activeSeries, isLoading: isLoadingActiveSeries } = useQuery<Series>({
     queryKey: ["/api/series/active"],
@@ -85,7 +87,7 @@ export default function Dashboard() {
           </Card>
         </Link>
 
-        <Card className="hover:shadow-md transition-shadow cursor-pointer">
+        <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setShowTeamSetupModal(true)}>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -188,6 +190,11 @@ export default function Dashboard() {
       <CreateSeriesModal
         isOpen={showCreateSeriesModal}
         onClose={() => setShowCreateSeriesModal(false)}
+      />
+      
+      <TeamSetupModal
+        isOpen={showTeamSetupModal}
+        onClose={() => setShowTeamSetupModal(false)}
       />
     </div>
   );

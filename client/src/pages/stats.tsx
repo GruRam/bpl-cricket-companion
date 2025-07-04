@@ -3,26 +3,39 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { TrendingUp, Award, Target } from "lucide-react";
+import { Series, Player, Team } from "@shared/schema";
 
 export default function Stats() {
   const [activeFilter, setActiveFilter] = useState<'individual' | 'team'>('individual');
 
-  const { data: activeSeries } = useQuery({
+  const { data: activeSeries, isLoading: isLoadingActiveSeries } = useQuery<Series>({
     queryKey: ["/api/series/active"],
   });
 
-  const { data: players } = useQuery({
+  const { data: players, isLoading: isLoadingPlayers } = useQuery<Player[]>({
     queryKey: ["/api/players"],
   });
 
-  const { data: seriesProgress } = useQuery({
-    queryKey: ["/api/series", activeSeries?.id, "progress"],
+  const { data: seriesProgress } = useQuery<{ team1Wins: number; team2Wins: number; team1: Team; team2: Team }>({
+    queryKey: [`/api/series/${activeSeries?.id}/progress`],
     enabled: !!activeSeries?.id,
   });
 
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
+
+  if (isLoadingActiveSeries || isLoadingPlayers) {
+    return <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="text-center">Loading statistics...</div>
+    </div>;
+  }
+
+  if (!activeSeries) {
+    return <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="text-center">No active series found. Please create a series first.</div>
+    </div>;
+  }
 
   const getAvatarColor = (index: number) => {
     const colors = ['bg-green-500', 'bg-purple-500', 'bg-red-500', 'bg-blue-500', 'bg-yellow-500', 'bg-pink-500'];

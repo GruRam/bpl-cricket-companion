@@ -70,7 +70,20 @@ export default function Dashboard() {
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setShowCreateSeriesModal(true)}>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800">Create New Series</h3>
+                <p className="text-gray-600">Start a new cricket series</p>
+              </div>
+              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                <Plus className="w-6 h-6 text-blue-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
         <Link href="/match">
           <Card className="hover:shadow-md transition-shadow cursor-pointer">
             <CardContent className="p-6">

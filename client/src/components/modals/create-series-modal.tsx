@@ -68,8 +68,7 @@ export default function CreateSeriesModal({ isOpen, onClose }: CreateSeriesModal
       const seriesData: InsertSeries = {
         name: seriesName,
         targetWins,
-        isActive: true,
-        status: "active"
+        isActive: true
       };
       
       const seriesResponse = await apiRequest("POST", "/api/series", seriesData);

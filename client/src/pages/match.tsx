@@ -53,7 +53,7 @@ export default function Match() {
               <div className="text-center">
                 <div className="mb-4">
                   <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                    Active Series: {activeSeries.name}
+                    Active Series: {activeSeries?.name}
                   </h3>
                   <p className="text-gray-600 mb-6">
                     Set new match under this series

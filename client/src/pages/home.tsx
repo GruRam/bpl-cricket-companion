@@ -5,12 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Play, Users, BarChart3, TrendingUp, Plus } from "lucide-react";
 import { Link } from "wouter";
 import CreateSeriesModal from "@/components/modals/create-series-modal";
-import TeamSetupModal from "@/components/modals/team-setup-modal";
 import { Series, Match, Team } from "@shared/schema";
 
-export default function Dashboard() {
+export default function Home() {
   const [showCreateSeriesModal, setShowCreateSeriesModal] = useState(false);
-  const [showTeamSetupModal, setShowTeamSetupModal] = useState(false);
   
   const { data: activeSeries, isLoading: isLoadingActiveSeries } = useQuery<Series>({
     queryKey: ["/api/series/active"],
@@ -62,28 +60,26 @@ export default function Dashboard() {
               {seriesProgress && ` • Currently ${seriesProgress.team1Wins}-${seriesProgress.team2Wins}`}
             </p>
           </div>
-          <div className="text-right">
-            <div className="text-sm text-white/80">Next Match</div>
-            <div className="text-lg font-semibold">Today</div>
-          </div>
+
         </div>
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setShowCreateSeriesModal(true)}>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-semibold text-gray-800">Create New Series</h3>
-                <p className="text-gray-600">Start a new cricket series</p>
+                <h3 className="text-lg font-semibold text-gray-800">Set up Series</h3>
+                <p className="text-gray-600">Create new series with teams</p>
               </div>
               <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                <Plus className="w-6 h-6 text-blue-600" />
+                <Users className="w-6 h-6 text-blue-600" />
               </div>
             </div>
           </CardContent>
         </Card>
+        
         <Link href="/match">
           <Card className="hover:shadow-md transition-shadow cursor-pointer">
             <CardContent className="p-6">
@@ -100,19 +96,21 @@ export default function Dashboard() {
           </Card>
         </Link>
 
-        <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setShowTeamSetupModal(true)}>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800">Team Setup</h3>
-                <p className="text-gray-600">Organize today's teams</p>
+        <Link href="/stats">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-800">View Stats</h3>
+                  <p className="text-gray-600">Check performance statistics</p>
+                </div>
+                <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                  <BarChart3 className="w-6 h-6 text-purple-600" />
+                </div>
               </div>
-              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                <Users className="w-6 h-6 text-red-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </Link>
 
         <Link href="/stats">
           <Card className="hover:shadow-md transition-shadow cursor-pointer">
@@ -203,11 +201,6 @@ export default function Dashboard() {
       <CreateSeriesModal
         isOpen={showCreateSeriesModal}
         onClose={() => setShowCreateSeriesModal(false)}
-      />
-      
-      <TeamSetupModal
-        isOpen={showTeamSetupModal}
-        onClose={() => setShowTeamSetupModal(false)}
       />
     </div>
   );

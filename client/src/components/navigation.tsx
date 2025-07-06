@@ -5,7 +5,7 @@ export default function Navigation() {
   const [location] = useLocation();
 
   const tabs = [
-    { id: "dashboard", label: "Dashboard", icon: Home, path: "/" },
+    { id: "home", label: "Home", icon: Home, path: "/" },
     { id: "players", label: "Players", icon: Users, path: "/players" },
     { id: "match", label: "Match", icon: Play, path: "/match" },
     { id: "stats", label: "Stats", icon: BarChart3, path: "/stats" },

@@ -11,9 +11,14 @@ interface WicketDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
   match: CurrentMatch;
+  onWicketSubmit?: (wicketDetails: {
+    batsmanOut: string;
+    dismissalType: string;
+    fielder?: string;
+  }) => void;
 }
 
-export default function WicketDetailsModal({ isOpen, onClose, match }: WicketDetailsModalProps) {
+export default function WicketDetailsModal({ isOpen, onClose, match, onWicketSubmit }: WicketDetailsModalProps) {
   const [batsmanOut, setBatsmanOut] = useState("");
   const [dismissalType, setDismissalType] = useState("");
   const [fielder, setFielder] = useState("");
@@ -39,12 +44,18 @@ export default function WicketDetailsModal({ isOpen, onClose, match }: WicketDet
   const handleSubmit = () => {
     if (!batsmanOut || !dismissalType || (fielderRequired && !fielder)) return;
 
-    // TODO: Implement wicket recording logic
-    console.log("Wicket recorded:", {
+    const wicketDetails = {
       batsmanOut,
       dismissalType,
-      fielder: fielderRequired ? fielder : null,
-    });
+      fielder: fielderRequired ? fielder : undefined,
+    };
+
+    console.log("Wicket recorded:", wicketDetails);
+    
+    // Call the callback with wicket details
+    if (onWicketSubmit) {
+      onWicketSubmit(wicketDetails);
+    }
 
     // Reset form
     setBatsmanOut("");

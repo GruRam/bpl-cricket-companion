@@ -15,10 +15,16 @@ import {
 } from "lucide-react";
 import type { CurrentMatch, BallEntry } from "@/lib/types";
 import type { Player } from "@shared/schema";
+import WicketDetailsModal from "@/components/modals/wicket-details-modal";
 
 interface BallByBallScorerProps {
   match: CurrentMatch;
   onWicketClick: () => void;
+  onWicketDetails?: (wicketDetails: {
+    batsmanOut: string;
+    dismissalType: string;
+    fielder?: string;
+  }) => void;
 }
 
 interface CompletedBall {
@@ -32,7 +38,7 @@ interface CompletedBall {
   commentary: string;
 }
 
-export default function AdvancedBallByBallScorer({ match, onWicketClick }: BallByBallScorerProps) {
+export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicketDetails }: BallByBallScorerProps) {
   // Match state
   const [currentInnings, setCurrentInnings] = useState(1);
   const [striker, setStriker] = useState(match.striker);
@@ -49,6 +55,12 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick }: BallB
   const [ballPosition, setBallPosition] = useState(1); // Position in over for display
   const [needsBowlerChange, setNeedsBowlerChange] = useState(false);
   const [needsBatsmanChange, setNeedsBatsmanChange] = useState(false);
+  const [pendingWicketDetails, setPendingWicketDetails] = useState<{
+    batsmanOut: string;
+    dismissalType: string;
+    fielder?: string;
+  } | null>(null);
+  const [showWicketModal, setShowWicketModal] = useState(false);
   
   // UI state
   const [quickEntryMode, setQuickEntryMode] = useState(true);
@@ -92,8 +104,22 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick }: BallB
       commentary += ` - No ball`;
       if (entry.runs > 0) commentary += ` + ${entry.runs} run${entry.runs !== 1 ? 's' : ''}`;
     } else if (entry.isWicket) {
-      const wicketType = entry.wicketType || 'unknown';
-      commentary += ` - OUT! ${wicketType.charAt(0).toUpperCase() + wicketType.slice(1).replace('_', ' ')}`;
+      // Use pending wicket details if available, otherwise fallback to entry
+      const wicketDetails = pendingWicketDetails;
+      if (wicketDetails) {
+        const dismissalType = wicketDetails.dismissalType;
+        const batsmanOut = wicketDetails.batsmanOut === 'striker' ? striker : nonStriker.name;
+        commentary += ` - OUT! ${batsmanOut} ${dismissalType}`;
+        if (wicketDetails.fielder) {
+          const fielderPlayer = bowlingPlayers.find(p => p.id.toString() === wicketDetails.fielder);
+          if (fielderPlayer) {
+            commentary += ` (caught by ${fielderPlayer.name})`;
+          }
+        }
+      } else {
+        const wicketType = entry.wicketType || 'dismissed';
+        commentary += ` - OUT! ${wicketType.charAt(0).toUpperCase() + wicketType.slice(1).replace('_', ' ')}`;
+      }
     } else {
       if (entry.runs === 0) commentary += ` - Dot ball`;
       else if (entry.runs === 1) commentary += ` - Single`;
@@ -105,6 +131,18 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick }: BallB
     }
     
     return commentary;
+  };
+
+  // Handle wicket details from modal
+  const handleWicketDetails = (wicketDetails: {
+    batsmanOut: string;
+    dismissalType: string;
+    fielder?: string;
+  }) => {
+    setPendingWicketDetails(wicketDetails);
+    if (onWicketDetails) {
+      onWicketDetails(wicketDetails);
+    }
   };
 
   // Handle ball entry
@@ -167,7 +205,9 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick }: BallB
     // Handle wicket
     if (entry.isWicket) {
       setNeedsBatsmanChange(true);
-      onWicketClick();
+      setShowWicketModal(true);
+      // Clear pending wicket details after ball is recorded
+      setPendingWicketDetails(null);
     }
   };
 
@@ -549,6 +589,14 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick }: BallB
           </div>
         </CardContent>
       </Card>
+
+      {/* Wicket Details Modal */}
+      <WicketDetailsModal
+        isOpen={showWicketModal}
+        onClose={() => setShowWicketModal(false)}
+        match={match}
+        onWicketSubmit={handleWicketDetails}
+      />
     </div>
   );
 }

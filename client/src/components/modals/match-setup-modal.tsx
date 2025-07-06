@@ -128,6 +128,11 @@ export default function MatchSetupModal({ isOpen, onClose, onMatchStart, activeS
     const battingPlayers = firstBattingTeam === "team1" ? getActiveTeam1Players() : getActiveTeam2Players();
     const bowlingPlayers = firstBattingTeam === "team1" ? getActiveTeam2Players() : getActiveTeam1Players();
 
+    // Get unavailable player IDs
+    const unavailablePlayers = matchPlayers
+      .filter(mp => mp.status === "unavailable")
+      .map(mp => mp.player.id);
+
     const match: CurrentMatch = {
       id: Date.now(),
       team1: { id: seriesTeams![0].id, name: team1Name },
@@ -141,6 +146,7 @@ export default function MatchSetupModal({ isOpen, onClose, onMatchStart, activeS
       striker: { id: 0, name: "" },
       nonStriker: { id: 0, name: "" },
       bowler: { id: 0, name: "" },
+      unavailablePlayers,
     };
 
     onMatchStart(match);

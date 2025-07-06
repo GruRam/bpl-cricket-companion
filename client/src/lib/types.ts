@@ -22,6 +22,7 @@ export interface CurrentMatch {
   striker: { id: number; name: string };
   nonStriker: { id: number; name: string };
   bowler: { id: number; name: string };
+  unavailablePlayers?: number[]; // IDs of players marked as unavailable
 }
 
 export interface PlayerStat {

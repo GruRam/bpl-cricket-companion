@@ -29,7 +29,7 @@ interface BallByBallScorerProps {
 }
 
 interface CompletedBall {
-  ballNumber: number; // 1-6 for valid balls, 0 for extras
+  ballNumber: number; // 1-6 for valid balls, 0.1, 0.2, etc. for extras
   entry: BallEntry;
   striker: string;
   nonStriker: string;
@@ -54,6 +54,7 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
   const [overBalls, setOverBalls] = useState<CompletedBall[]>([]);
   const [allBalls, setAllBalls] = useState<CompletedBall[]>([]);
   const [ballPosition, setBallPosition] = useState(1); // Position in over for display
+  const [extraBallCount, setExtraBallCount] = useState(0); // Count of extra balls in current over
   const [needsBowlerChange, setNeedsBowlerChange] = useState(false);
   const [needsBatsmanChange, setNeedsBatsmanChange] = useState(false);
   const [pendingWicketDetails, setPendingWicketDetails] = useState<{
@@ -109,10 +110,11 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
       allBalls,
       dismissedPlayers,
       ballPosition,
-      runRate
+      runRate,
+      extraBallCount
     };
     localStorage.setItem(`match_${match.id}`, JSON.stringify(matchState));
-  }, [striker, nonStriker, bowler, totalScore, currentOver, currentBallInOver, overBalls, allBalls, dismissedPlayers, ballPosition, runRate, match.id]);
+  }, [striker, nonStriker, bowler, totalScore, currentOver, currentBallInOver, overBalls, allBalls, dismissedPlayers, ballPosition, runRate, extraBallCount, match.id]);
 
   // Load match state from localStorage on component mount
   useEffect(() => {
@@ -131,6 +133,7 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
         setDismissedPlayers(state.dismissedPlayers || []);
         setBallPosition(state.ballPosition || 1);
         setRunRate(state.runRate || 0);
+        setExtraBallCount(state.extraBallCount || 0);
       } catch (error) {
         console.error('Error loading match state:', error);
       }
@@ -201,9 +204,19 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
     const isValidBall = !entry.isWide && !entry.isNoBall;
     const totalRuns = entry.runs + entry.extras;
     
+    // Calculate ball number for extras using decimal notation
+    let ballNumber: number;
+    if (isValidBall) {
+      ballNumber = currentBallInOver;
+    } else {
+      // For extras, use decimal notation: 0.1, 0.2, etc.
+      setExtraBallCount(prev => prev + 1);
+      ballNumber = parseFloat(`0.${extraBallCount + 1}`);
+    }
+    
     // Create completed ball record
     const completedBall: CompletedBall = {
-      ballNumber: isValidBall ? currentBallInOver : 0, // 0 for extras
+      ballNumber,
       entry,
       striker: striker.name,
       nonStriker: nonStriker.name,
@@ -247,6 +260,7 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
         setCurrentBallInOver(1);
         setBallPosition(1);
         setOverBalls([]);
+        setExtraBallCount(0); // Reset extra ball count for new over
         setNeedsBowlerChange(true);
       } else {
         setCurrentBallInOver(prev => prev + 1);
@@ -372,7 +386,8 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
                       .filter(player => 
                         player.id !== nonStriker?.id && 
                         player.id !== bowler?.id &&
-                        !dismissedPlayers.includes(player.id)
+                        !dismissedPlayers.includes(player.id) &&
+                        !match.unavailablePlayers?.includes(player.id)
                       )
                       .map((player) => (
                         <SelectItem key={player.id} value={player.id.toString()}>
@@ -399,7 +414,8 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
                       .filter(player => 
                         player.id !== striker?.id && 
                         player.id !== bowler?.id &&
-                        !dismissedPlayers.includes(player.id)
+                        !dismissedPlayers.includes(player.id) &&
+                        !match.unavailablePlayers?.includes(player.id)
                       )
                       .map((player) => (
                         <SelectItem key={player.id} value={player.id.toString()}>
@@ -425,7 +441,11 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
                 </SelectTrigger>
                 <SelectContent>
                   {bowlingPlayers
-                    .filter(player => player.id !== striker?.id && player.id !== nonStriker?.id)
+                    .filter(player => 
+                      player.id !== striker?.id && 
+                      player.id !== nonStriker?.id &&
+                      !match.unavailablePlayers?.includes(player.id)
+                    )
                     .map((player) => (
                       <SelectItem key={player.id} value={player.id.toString()}>
                         {player.name}
@@ -475,9 +495,9 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
                   </Button>
                 ))}
               </div>
-              <div className="flex justify-center">
+              <div className="flex gap-4 justify-center">
                 <Button
-                  className="h-12 text-white font-bold bg-orange-500 hover:bg-orange-600"
+                  className="h-12 px-6 text-white font-bold bg-orange-500 hover:bg-orange-600"
                   onClick={() => setShowNoBallOptions(true)}
                 >
                   NB
@@ -610,11 +630,11 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
             </div>
             
             {/* Extras row if any */}
-            {overBalls.some(b => b.ballNumber === 0) && (
+            {overBalls.some(b => b.ballNumber < 1) && (
               <div>
                 <div className="text-xs text-muted-foreground mb-2">Extras</div>
                 <div className="flex gap-2 flex-wrap">
-                  {overBalls.filter(b => b.ballNumber === 0).map((ball, index) => (
+                  {overBalls.filter(b => b.ballNumber < 1).map((ball, index) => (
                     <div
                       key={index}
                       className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold bg-orange-500 text-white"

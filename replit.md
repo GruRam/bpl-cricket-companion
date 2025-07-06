@@ -133,4 +133,15 @@ Changelog:
   * Fixed infinite API call loops
   * Team names always reflect captain names (no editing)
   * Common player concept: match wins for either team, series wins only for original team
+
+- July 06, 2025. Match state persistence and extras handling:
+  * Added automatic match state saving during scoring
+  * Resume prompt when returning to ongoing match
+  * Excluded dismissed and unavailable players from striker/non-striker dropdowns
+  * Improved wide/no-ball handling:
+    - WD/NB display correctly in over progress
+    - No-ball allows additional runs (0-6) on top of extra
+    - Ball counting uses decimal notation (0.1, 0.2) for extras
+    - Wide balls allow dismissals (run out/stumped)
+    - No-ball allows dismissals (run out) plus additional runs
 ```

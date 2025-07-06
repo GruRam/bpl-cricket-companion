@@ -10,7 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { 
   Plus, Edit, RotateCcw, ArrowRight, Users, Play, Pause, 
-  ChevronLeft, ChevronRight, Target, Clock, Trophy, AlertCircle 
+  ChevronLeft, ChevronRight, Target, Clock, Trophy, AlertCircle,
+  User, Circle
 } from "lucide-react";
 import type { CurrentMatch, BallEntry } from "@/lib/types";
 import type { Player } from "@shared/schema";
@@ -21,12 +22,13 @@ interface BallByBallScorerProps {
 }
 
 interface CompletedBall {
-  ballNumber: number;
+  ballNumber: number; // 1-6 for valid balls, 0 for extras
   entry: BallEntry;
   striker: string;
   nonStriker: string;
   bowler: string;
   overNumber: number;
+  ballPosition: number; // Position in the over for display
   commentary: string;
 }
 
@@ -44,6 +46,9 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick }: BallB
   const [currentBallInOver, setCurrentBallInOver] = useState(1);
   const [overBalls, setOverBalls] = useState<CompletedBall[]>([]);
   const [allBalls, setAllBalls] = useState<CompletedBall[]>([]);
+  const [ballPosition, setBallPosition] = useState(1); // Position in over for display
+  const [needsBowlerChange, setNeedsBowlerChange] = useState(false);
+  const [needsBatsmanChange, setNeedsBatsmanChange] = useState(false);
   
   // UI state
   const [quickEntryMode, setQuickEntryMode] = useState(true);
@@ -87,7 +92,8 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick }: BallB
       commentary += ` - No ball`;
       if (entry.runs > 0) commentary += ` + ${entry.runs} run${entry.runs !== 1 ? 's' : ''}`;
     } else if (entry.isWicket) {
-      commentary += ` - OUT! ${entry.wicketType}`;
+      const wicketType = entry.wicketType || 'unknown';
+      commentary += ` - OUT! ${wicketType.charAt(0).toUpperCase() + wicketType.slice(1).replace('_', ' ')}`;
     } else {
       if (entry.runs === 0) commentary += ` - Dot ball`;
       else if (entry.runs === 1) commentary += ` - Single`;
@@ -114,12 +120,16 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick }: BallB
       nonStriker: nonStriker.name,
       bowler: bowler.name,
       overNumber: currentOver,
+      ballPosition: ballPosition,
       commentary: generateCommentary(entry, striker.name, bowler.name)
     };
     
     // Add to balls arrays
     setOverBalls(prev => [...prev, completedBall]);
     setAllBalls(prev => [...prev, completedBall]);
+    
+    // Update ball position for display
+    setBallPosition(prev => prev + 1);
     
     // Update total score
     setTotalScore(prev => ({
@@ -146,8 +156,9 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick }: BallB
         setNonStriker(temp);
         setCurrentOver(prev => prev + 1);
         setCurrentBallInOver(1);
+        setBallPosition(1);
         setOverBalls([]);
-        // TODO: Allow bowler change
+        setNeedsBowlerChange(true);
       } else {
         setCurrentBallInOver(prev => prev + 1);
       }
@@ -155,20 +166,21 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick }: BallB
     
     // Handle wicket
     if (entry.isWicket) {
+      setNeedsBatsmanChange(true);
       onWicketClick();
     }
   };
 
-  // Quick entry buttons
+  // Quick entry buttons with proper color coding
   const quickEntryButtons = [
     { label: "0", entry: { runs: 0, isWide: false, isNoBall: false, isWicket: false, extras: 0 }, color: "bg-slate-500 hover:bg-slate-600" },
-    { label: "1", entry: { runs: 1, isWide: false, isNoBall: false, isWicket: false, extras: 0 }, color: "bg-green-500 hover:bg-green-600" },
-    { label: "2", entry: { runs: 2, isWide: false, isNoBall: false, isWicket: false, extras: 0 }, color: "bg-green-500 hover:bg-green-600" },
-    { label: "3", entry: { runs: 3, isWide: false, isNoBall: false, isWicket: false, extras: 0 }, color: "bg-green-500 hover:bg-green-600" },
-    { label: "4", entry: { runs: 4, isWide: false, isNoBall: false, isWicket: false, extras: 0 }, color: "bg-yellow-500 hover:bg-yellow-600" },
-    { label: "5", entry: { runs: 5, isWide: false, isNoBall: false, isWicket: false, extras: 0 }, color: "bg-green-500 hover:bg-green-600" },
-    { label: "6", entry: { runs: 6, isWide: false, isNoBall: false, isWicket: false, extras: 0 }, color: "bg-red-500 hover:bg-red-600" },
-    { label: "W", entry: { runs: 0, isWide: false, isNoBall: false, isWicket: true, extras: 0 }, color: "bg-purple-500 hover:bg-purple-600" },
+    { label: "1", entry: { runs: 1, isWide: false, isNoBall: false, isWicket: false, extras: 0 }, color: "bg-blue-500 hover:bg-blue-600" },
+    { label: "2", entry: { runs: 2, isWide: false, isNoBall: false, isWicket: false, extras: 0 }, color: "bg-blue-500 hover:bg-blue-600" },
+    { label: "3", entry: { runs: 3, isWide: false, isNoBall: false, isWicket: false, extras: 0 }, color: "bg-blue-500 hover:bg-blue-600" },
+    { label: "4", entry: { runs: 4, isWide: false, isNoBall: false, isWicket: false, extras: 0 }, color: "bg-green-500 hover:bg-green-600" },
+    { label: "5", entry: { runs: 5, isWide: false, isNoBall: false, isWicket: false, extras: 0 }, color: "bg-blue-500 hover:bg-blue-600" },
+    { label: "6", entry: { runs: 6, isWide: false, isNoBall: false, isWicket: false, extras: 0 }, color: "bg-green-500 hover:bg-green-600" },
+    { label: "W", entry: { runs: 0, isWide: false, isNoBall: false, isWicket: true, extras: 0 }, color: "bg-red-500 hover:bg-red-600" },
     { label: "Wd", entry: { runs: 0, isWide: true, isNoBall: false, isWicket: false, extras: 1 }, color: "bg-orange-500 hover:bg-orange-600" },
     { label: "NB", entry: { runs: 0, isWide: false, isNoBall: true, isWicket: false, extras: 1 }, color: "bg-orange-500 hover:bg-orange-600" },
   ];
@@ -251,44 +263,57 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick }: BallB
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <Label className="text-sm font-medium">Striker</Label>
-              <Select value={striker?.id.toString()} onValueChange={(value) => {
-                const player = battingPlayers.find(p => p.id === parseInt(value));
-                if (player) setStriker(player);
-              }}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {battingPlayers.map((player) => (
-                    <SelectItem key={player.id} value={player.id.toString()}>
-                      {player.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            {/* Batsmen side by side */}
+            <div className="md:col-span-2 grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-sm font-medium flex items-center gap-2">
+                  <User className="h-4 w-4" />
+                  Striker *
+                </Label>
+                <Select value={striker?.id.toString()} onValueChange={(value) => {
+                  const player = battingPlayers.find(p => p.id === parseInt(value));
+                  if (player) setStriker(player);
+                }}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {battingPlayers.map((player) => (
+                      <SelectItem key={player.id} value={player.id.toString()}>
+                        {player.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-sm font-medium flex items-center gap-2">
+                  <User className="h-4 w-4" />
+                  Non-Striker
+                </Label>
+                <Select value={nonStriker?.id.toString()} onValueChange={(value) => {
+                  const player = battingPlayers.find(p => p.id === parseInt(value));
+                  if (player) setNonStriker(player);
+                }}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {battingPlayers.map((player) => (
+                      <SelectItem key={player.id} value={player.id.toString()}>
+                        {player.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
+            {/* Bowler */}
             <div>
-              <Label className="text-sm font-medium">Non-Striker</Label>
-              <Select value={nonStriker?.id.toString()} onValueChange={(value) => {
-                const player = battingPlayers.find(p => p.id === parseInt(value));
-                if (player) setNonStriker(player);
-              }}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {battingPlayers.map((player) => (
-                    <SelectItem key={player.id} value={player.id.toString()}>
-                      {player.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className="text-sm font-medium">Bowler</Label>
+              <Label className="text-sm font-medium flex items-center gap-2">
+                <Circle className="h-4 w-4" />
+                Bowler
+              </Label>
               <Select value={bowler?.id.toString()} onValueChange={(value) => {
                 const player = bowlingPlayers.find(p => p.id === parseInt(value));
                 if (player) setBowler(player);
@@ -406,37 +431,89 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick }: BallB
       {/* Current Over Progress */}
       <Card>
         <CardHeader>
-          <CardTitle>Current Over Progress</CardTitle>
+          <CardTitle className="flex items-center justify-between">
+            <span>Current Over Progress</span>
+            <div className="flex gap-2">
+              {needsBowlerChange && (
+                <Badge variant="destructive" className="animate-pulse">
+                  <AlertCircle className="h-3 w-3 mr-1" />
+                  Change Bowler
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-4 w-4 p-0 ml-1 text-white hover:text-white"
+                    onClick={() => setNeedsBowlerChange(false)}
+                  >
+                    ×
+                  </Button>
+                </Badge>
+              )}
+              {needsBatsmanChange && (
+                <Badge variant="destructive" className="animate-pulse">
+                  <AlertCircle className="h-3 w-3 mr-1" />
+                  New Batsman
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-4 w-4 p-0 ml-1 text-white hover:text-white"
+                    onClick={() => setNeedsBatsmanChange(false)}
+                  >
+                    ×
+                  </Button>
+                </Badge>
+              )}
+            </div>
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2">
-            <div className="flex gap-2">
-              {[1, 2, 3, 4, 5, 6].map((ballNum) => {
-                const ball = overBalls.find(b => b.ballNumber === ballNum);
-                return (
-                  <div
-                    key={ballNum}
-                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                      ball
-                        ? ball.entry.isWicket
-                          ? 'bg-red-500 text-white'
-                          : ball.entry.runs === 4
-                          ? 'bg-yellow-500 text-white'
-                          : ball.entry.runs === 6
-                          ? 'bg-red-500 text-white'
-                          : 'bg-green-500 text-white'
-                        : ballNum === currentBallInOver
-                        ? 'bg-blue-500 text-white'
-                        : 'bg-gray-200'
-                    }`}
-                  >
-                    {ball ? (ball.entry.isWicket ? 'W' : ball.entry.runs) : ballNum}
-                  </div>
-                );
-              })}
+          <div className="space-y-4">
+            {/* Valid balls row */}
+            <div>
+              <div className="text-xs text-muted-foreground mb-2">Valid Balls</div>
+              <div className="flex gap-2">
+                {[1, 2, 3, 4, 5, 6].map((ballNum) => {
+                  const ball = overBalls.find(b => b.ballNumber === ballNum);
+                  return (
+                    <div
+                      key={ballNum}
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                        ball
+                          ? ball.entry.isWicket
+                            ? 'bg-red-500 text-white'
+                            : ball.entry.runs === 4 || ball.entry.runs === 6
+                            ? 'bg-green-500 text-white'
+                            : 'bg-blue-500 text-white'
+                          : ballNum === currentBallInOver
+                          ? 'bg-blue-100 border-2 border-blue-500'
+                          : 'bg-gray-200'
+                      }`}
+                    >
+                      {ball ? (ball.entry.isWicket ? 'W' : ball.entry.runs) : ballNum}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
+            
+            {/* Extras row if any */}
+            {overBalls.some(b => b.ballNumber === 0) && (
+              <div>
+                <div className="text-xs text-muted-foreground mb-2">Extras</div>
+                <div className="flex gap-2 flex-wrap">
+                  {overBalls.filter(b => b.ballNumber === 0).map((ball, index) => (
+                    <div
+                      key={index}
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold bg-orange-500 text-white"
+                    >
+                      {ball.entry.isWide ? 'Wd' : ball.entry.isNoBall ? 'NB' : 'E'}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
             <div className="text-sm text-muted-foreground">
-              Ball {currentBallInOver} of 6
+              Ball {currentBallInOver} of 6 | Over {currentOver}
             </div>
           </div>
         </CardContent>
@@ -449,16 +526,20 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick }: BallB
         </CardHeader>
         <CardContent>
           <div className="space-y-2 max-h-64 overflow-y-auto">
-            {allBalls.slice(-10).reverse().map((ball, index) => (
-              <div key={index} className="text-sm border-b pb-2">
-                <div className="font-medium">
-                  {ball.overNumber}.{ball.ballNumber || 'Extra'} - {ball.commentary}
+            {allBalls.slice(-10).reverse().map((ball, index) => {
+              const overDisplay = ball.overNumber === 1 ? 0 : ball.overNumber - 1;
+              const ballDisplay = ball.ballNumber || 'Extra';
+              return (
+                <div key={index} className="text-sm border-b pb-2">
+                  <div className="font-medium">
+                    {overDisplay}.{ballDisplay} - {ball.commentary}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {ball.striker} * {ball.nonStriker} | {ball.bowler} bowling
+                  </div>
                 </div>
-                <div className="text-xs text-muted-foreground">
-                  {ball.striker} * {ball.nonStriker} | {ball.bowler} bowling
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </CardContent>
       </Card>

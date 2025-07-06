@@ -363,11 +363,13 @@ export default function MatchSetupModal({ isOpen, onClose, onMatchStart, activeS
                       <SelectValue placeholder="Select striker" />
                     </SelectTrigger>
                     <SelectContent>
-                      {getActiveTeam1Players().map(({ player }) => (
-                        <SelectItem key={player.id} value={player.id.toString()}>
-                          {player.name}
-                        </SelectItem>
-                      ))}
+                      {getActiveTeam1Players()
+                        .filter(({ player }) => player.id !== nonStriker?.id)
+                        .map(({ player }) => (
+                          <SelectItem key={player.id} value={player.id.toString()}>
+                            {player.name}
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -382,11 +384,13 @@ export default function MatchSetupModal({ isOpen, onClose, onMatchStart, activeS
                       <SelectValue placeholder="Select non-striker" />
                     </SelectTrigger>
                     <SelectContent>
-                      {getActiveTeam1Players().map(({ player }) => (
-                        <SelectItem key={player.id} value={player.id.toString()}>
-                          {player.name}
-                        </SelectItem>
-                      ))}
+                      {getActiveTeam1Players()
+                        .filter(({ player }) => player.id !== striker?.id)
+                        .map(({ player }) => (
+                          <SelectItem key={player.id} value={player.id.toString()}>
+                            {player.name}
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 </div>

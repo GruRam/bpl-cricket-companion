@@ -3,7 +3,7 @@ export interface BallEntry {
   isWide: boolean;
   isNoBall: boolean;
   isWicket: boolean;
-  wicketType?: 'bowled' | 'caught' | 'lbw' | 'run_out' | 'stumped' | 'hit_wicket';
+  wicketType?: 'bowled' | 'caught' | 'boundary_out' | 'run_out' | 'stumped' | 'hit_wicket';
   wicketPlayerId?: number;
   fielderId?: number;
   extras: number;

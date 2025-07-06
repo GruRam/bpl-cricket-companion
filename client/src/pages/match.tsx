@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Play, Settings } from "lucide-react";
-import BallByBallScorer from "@/components/ball-by-ball-scorer";
+import AdvancedBallByBallScorer from "@/components/advanced-ball-by-ball-scorer";
 import WicketDetailsModal from "@/components/modals/wicket-details-modal";
 import MatchSetupModal from "@/components/modals/match-setup-modal";
 import type { CurrentMatch } from "@/lib/types";
@@ -26,7 +26,7 @@ export default function Match() {
   if (matchStarted && currentMatch) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <BallByBallScorer
+        <AdvancedBallByBallScorer
           match={currentMatch}
           onWicketClick={() => setShowWicketModal(true)}
         />

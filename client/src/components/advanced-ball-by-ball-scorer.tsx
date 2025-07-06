@@ -54,7 +54,7 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
   const [overBalls, setOverBalls] = useState<CompletedBall[]>([]);
   const [allBalls, setAllBalls] = useState<CompletedBall[]>([]);
   const [ballPosition, setBallPosition] = useState(1); // Position in over for display
-  const [extraBallCount, setExtraBallCount] = useState(0); // Count of extra balls in current over
+ // Count of extra balls in current over
   const [needsBowlerChange, setNeedsBowlerChange] = useState(false);
   const [needsBatsmanChange, setNeedsBatsmanChange] = useState(false);
   const [pendingWicketDetails, setPendingWicketDetails] = useState<{
@@ -110,11 +110,10 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
       allBalls,
       dismissedPlayers,
       ballPosition,
-      runRate,
-      extraBallCount
+      runRate
     };
     localStorage.setItem(`match_${match.id}`, JSON.stringify(matchState));
-  }, [striker, nonStriker, bowler, totalScore, currentOver, currentBallInOver, overBalls, allBalls, dismissedPlayers, ballPosition, runRate, extraBallCount, match.id]);
+  }, [striker, nonStriker, bowler, totalScore, currentOver, currentBallInOver, overBalls, allBalls, dismissedPlayers, ballPosition, runRate, match.id]);
 
   // Load match state from localStorage on component mount
   useEffect(() => {
@@ -133,7 +132,7 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
         setDismissedPlayers(state.dismissedPlayers || []);
         setBallPosition(state.ballPosition || 1);
         setRunRate(state.runRate || 0);
-        setExtraBallCount(state.extraBallCount || 0);
+
       } catch (error) {
         console.error('Error loading match state:', error);
       }
@@ -204,14 +203,13 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
     const isValidBall = !entry.isWide && !entry.isNoBall;
     const totalRuns = entry.runs + entry.extras;
     
-    // Calculate ball number for extras using decimal notation
+    // Calculate ball number for commentary using decimal notation
     let ballNumber: number;
     if (isValidBall) {
-      ballNumber = currentBallInOver;
+      ballNumber = parseFloat(`0.${currentBallInOver}`);
     } else {
-      // For extras, use decimal notation: 0.1, 0.2, etc.
-      setExtraBallCount(prev => prev + 1);
-      ballNumber = parseFloat(`0.${extraBallCount + 1}`);
+      // For extras, keep using the same ball number as the current ball
+      ballNumber = parseFloat(`0.${currentBallInOver}`);
     }
     
     // Create completed ball record
@@ -249,7 +247,7 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
       setNonStriker(temp);
     }
     
-    // Handle over completion
+    // Handle over completion and ball progression
     if (isValidBall) {
       if (currentBallInOver === 6) {
         // Over complete - swap batsmen and reset
@@ -260,12 +258,12 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
         setCurrentBallInOver(1);
         setBallPosition(1);
         setOverBalls([]);
-        setExtraBallCount(0); // Reset extra ball count for new over
         setNeedsBowlerChange(true);
       } else {
         setCurrentBallInOver(prev => prev + 1);
       }
     }
+    // For extras, don't increment currentBallInOver - stay on same ball
     
     // Handle wicket
     if (entry.isWicket) {
@@ -606,7 +604,13 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
               <div className="text-xs text-muted-foreground mb-2">Valid Balls</div>
               <div className="flex gap-2">
                 {[1, 2, 3, 4, 5, 6].map((ballNum) => {
-                  const ball = overBalls.find(b => b.ballNumber === ballNum);
+                  // Find the last valid ball for this position
+                  const ballsForPosition = overBalls.filter(b => {
+                    const ballPos = parseFloat(b.ballNumber.toString());
+                    return Math.abs(ballPos - parseFloat(`0.${ballNum}`)) < 0.001;
+                  });
+                  const ball = ballsForPosition[ballsForPosition.length - 1]; // Get the last ball for this position
+                  
                   return (
                     <div
                       key={ballNum}
@@ -629,22 +633,17 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
               </div>
             </div>
             
-            {/* Extras row if any */}
-            {overBalls.some(b => b.ballNumber < 1) && (
-              <div>
-                <div className="text-xs text-muted-foreground mb-2">Extras</div>
-                <div className="flex gap-2 flex-wrap">
-                  {overBalls.filter(b => b.ballNumber < 1).map((ball, index) => (
-                    <div
-                      key={index}
-                      className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold bg-orange-500 text-white"
-                    >
-                      {ball.entry.isWide ? 'WD' : ball.entry.isNoBall ? 'NB' : 'E'}
-                    </div>
-                  ))}
-                </div>
+            {/* Live Commentary */}
+            <div>
+              <div className="text-xs text-muted-foreground mb-2">Live Commentary</div>
+              <div className="max-h-32 overflow-y-auto space-y-1">
+                {overBalls.map((ball, index) => (
+                  <div key={index} className="text-sm">
+                    <span className="font-bold">{ball.ballNumber}:</span> {ball.commentary}
+                  </div>
+                ))}
               </div>
-            )}
+            </div>
             
             <div className="text-sm text-muted-foreground">
               Ball {currentBallInOver} of 6 | Over {currentOver}

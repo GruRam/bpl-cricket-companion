@@ -91,7 +91,25 @@ export default function WicketDetailsModal({ isOpen, onClose, match, currentStri
             </Select>
           </div>
 
-          
+          <div>
+            <Label>Dismissal Type</Label>
+            <div className="grid grid-cols-2 gap-2 mt-2">
+              {dismissalTypes.map((type) => (
+                <Button
+                  key={type}
+                  variant={dismissalType === type ? "default" : "outline"}
+                  onClick={() => setDismissalType(type)}
+                  className={`text-sm ${
+                    dismissalType === type
+                      ? "bg-purple-600 hover:bg-purple-700"
+                      : ""
+                  }`}
+                >
+                  {type}
+                </Button>
+              ))}
+            </div>
+          </div>
 
           {fielderRequired && (
             <div>

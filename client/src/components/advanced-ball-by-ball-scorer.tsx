@@ -13,6 +13,7 @@ import {
   ChevronLeft, ChevronRight, Target, Clock, Trophy, AlertCircle,
   User, Circle
 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import type { CurrentMatch, BallEntry } from "@/lib/types";
 import type { Player } from "@shared/schema";
 import WicketDetailsModal from "@/components/modals/wicket-details-modal";
@@ -61,9 +62,11 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
     fielder?: string;
   } | null>(null);
   const [showWicketModal, setShowWicketModal] = useState(false);
+  const [dismissedPlayers, setDismissedPlayers] = useState<number[]>([]);
   
   // UI state
   const [quickEntryMode, setQuickEntryMode] = useState(true);
+  const [showNoBallOptions, setShowNoBallOptions] = useState(false);
   const [customEntry, setCustomEntry] = useState({
     runs: 0,
     isWide: false,
@@ -92,6 +95,47 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
       setRunRate((totalScore.runs / totalBalls) * 6);
     }
   }, [totalScore]);
+
+  // Save match state to localStorage
+  useEffect(() => {
+    const matchState = {
+      striker,
+      nonStriker,
+      bowler,
+      totalScore,
+      currentOver,
+      currentBallInOver,
+      overBalls,
+      allBalls,
+      dismissedPlayers,
+      ballPosition,
+      runRate
+    };
+    localStorage.setItem(`match_${match.id}`, JSON.stringify(matchState));
+  }, [striker, nonStriker, bowler, totalScore, currentOver, currentBallInOver, overBalls, allBalls, dismissedPlayers, ballPosition, runRate, match.id]);
+
+  // Load match state from localStorage on component mount
+  useEffect(() => {
+    const savedState = localStorage.getItem(`match_${match.id}`);
+    if (savedState) {
+      try {
+        const state = JSON.parse(savedState);
+        setStriker(state.striker || match.striker);
+        setNonStriker(state.nonStriker || match.nonStriker);
+        setBowler(state.bowler || match.bowler);
+        setTotalScore(state.totalScore || { runs: 0, wickets: 0, overs: 0, balls: 0 });
+        setCurrentOver(state.currentOver || 1);
+        setCurrentBallInOver(state.currentBallInOver || 1);
+        setOverBalls(state.overBalls || []);
+        setAllBalls(state.allBalls || []);
+        setDismissedPlayers(state.dismissedPlayers || []);
+        setBallPosition(state.ballPosition || 1);
+        setRunRate(state.runRate || 0);
+      } catch (error) {
+        console.error('Error loading match state:', error);
+      }
+    }
+  }, [match.id]);
 
   // Generate commentary for a ball
   const generateCommentary = (entry: BallEntry, striker: string, bowler: string): string => {
@@ -140,6 +184,13 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
     fielder?: string;
   }) => {
     setPendingWicketDetails(wicketDetails);
+    
+    // Add dismissed player to list
+    const dismissedPlayerId = wicketDetails.batsmanOut === 'striker' ? striker?.id : nonStriker?.id;
+    if (dismissedPlayerId) {
+      setDismissedPlayers(prev => [...prev, dismissedPlayerId]);
+    }
+    
     if (onWicketDetails) {
       onWicketDetails(wicketDetails);
     }
@@ -221,8 +272,7 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
     { label: "5", entry: { runs: 5, isWide: false, isNoBall: false, isWicket: false, extras: 0 }, color: "bg-blue-500 hover:bg-blue-600" },
     { label: "6", entry: { runs: 6, isWide: false, isNoBall: false, isWicket: false, extras: 0 }, color: "bg-green-500 hover:bg-green-600" },
     { label: "W", entry: { runs: 0, isWide: false, isNoBall: false, isWicket: true, extras: 0 }, color: "bg-red-500 hover:bg-red-600" },
-    { label: "Wd", entry: { runs: 0, isWide: true, isNoBall: false, isWicket: false, extras: 1 }, color: "bg-orange-500 hover:bg-orange-600" },
-    { label: "NB", entry: { runs: 0, isWide: false, isNoBall: true, isWicket: false, extras: 1 }, color: "bg-orange-500 hover:bg-orange-600" },
+    { label: "WD", entry: { runs: 0, isWide: true, isNoBall: false, isWicket: false, extras: 1 }, color: "bg-orange-500 hover:bg-orange-600" },
   ];
 
   // Handle custom entry submission
@@ -319,7 +369,11 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
                   </SelectTrigger>
                   <SelectContent>
                     {battingPlayers
-                      .filter(player => player.id !== nonStriker?.id && player.id !== bowler?.id)
+                      .filter(player => 
+                        player.id !== nonStriker?.id && 
+                        player.id !== bowler?.id &&
+                        !dismissedPlayers.includes(player.id)
+                      )
                       .map((player) => (
                         <SelectItem key={player.id} value={player.id.toString()}>
                           {player.name}
@@ -342,7 +396,11 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
                   </SelectTrigger>
                   <SelectContent>
                     {battingPlayers
-                      .filter(player => player.id !== striker?.id && player.id !== bowler?.id)
+                      .filter(player => 
+                        player.id !== striker?.id && 
+                        player.id !== bowler?.id &&
+                        !dismissedPlayers.includes(player.id)
+                      )
                       .map((player) => (
                         <SelectItem key={player.id} value={player.id.toString()}>
                           {player.name}
@@ -405,16 +463,26 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
         </CardHeader>
         <CardContent>
           {quickEntryMode ? (
-            <div className="grid grid-cols-5 gap-2">
-              {quickEntryButtons.map((button) => (
+            <div className="space-y-4">
+              <div className="grid grid-cols-5 gap-2">
+                {quickEntryButtons.map((button) => (
+                  <Button
+                    key={button.label}
+                    className={`h-12 text-white font-bold ${button.color}`}
+                    onClick={() => handleBallEntry(button.entry)}
+                  >
+                    {button.label}
+                  </Button>
+                ))}
+              </div>
+              <div className="flex justify-center">
                 <Button
-                  key={button.label}
-                  className={`h-12 text-white font-bold ${button.color}`}
-                  onClick={() => handleBallEntry(button.entry)}
+                  className="h-12 text-white font-bold bg-orange-500 hover:bg-orange-600"
+                  onClick={() => setShowNoBallOptions(true)}
                 >
-                  {button.label}
+                  NB
                 </Button>
-              ))}
+              </div>
             </div>
           ) : (
             <div className="space-y-4">
@@ -551,7 +619,7 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
                       key={index}
                       className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold bg-orange-500 text-white"
                     >
-                      {ball.entry.isWide ? 'Wd' : ball.entry.isNoBall ? 'NB' : 'E'}
+                      {ball.entry.isWide ? 'WD' : ball.entry.isNoBall ? 'NB' : 'E'}
                     </div>
                   ))}
                 </div>
@@ -609,6 +677,35 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
         } : undefined}
         onWicketSubmit={handleWicketDetails}
       />
+      
+      <Dialog open={showNoBallOptions} onOpenChange={setShowNoBallOptions}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>No Ball Options</DialogTitle>
+            <DialogDescription>
+              Select additional runs scored by batters (on top of the 1 no-ball extra)
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-4 gap-2 mt-4">
+            {[0, 1, 2, 3, 4, 5, 6].map(runs => (
+              <Button
+                key={runs}
+                variant="outline"
+                className="h-12 text-lg font-bold"
+                onClick={() => {
+                  handleBallEntry({ runs, isWide: false, isNoBall: true, isWicket: false, extras: 1 });
+                  setShowNoBallOptions(false);
+                }}
+              >
+                {runs}
+              </Button>
+            ))}
+          </div>
+          <div className="mt-4 text-sm text-gray-600">
+            <p>Note: On a no-ball, batters can also be run out.</p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

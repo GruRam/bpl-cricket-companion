@@ -40,6 +40,13 @@ export default function WicketDetailsModal({ isOpen, onClose, match, currentStri
     "Hit Wicket",
     "Boundary Out",
   ];
+  
+  // For wide balls, only stumped and run out are possible
+  // For no balls, only run out is possible (can't be stumped, bowled, caught on no-ball)
+  const getValidDismissalTypes = () => {
+    // For now, return all types - we can add logic later based on ball type
+    return dismissalTypes;
+  };
 
   const fielderRequired = dismissalType === "Caught" || dismissalType === "Run Out" || dismissalType === "Stumped";
 

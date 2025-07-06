@@ -38,8 +38,8 @@ export default function MatchSetupModal({ isOpen, onClose, onMatchStart, activeS
   const [bowler, setBowler] = useState<Player | null>(null);
   const { toast } = useToast();
 
-  // Fetch series teams with captain information
-  const { data: seriesTeams } = useQuery<(Team & { captain: Player })[]>({
+  // Fetch series teams
+  const { data: seriesTeams } = useQuery<Team[]>({
     queryKey: ["/api/series", activeSeries?.id, "teams"],
     enabled: !!activeSeries?.id && isOpen,
   });
@@ -60,9 +60,9 @@ export default function MatchSetupModal({ isOpen, onClose, onMatchStart, activeS
   // Initialize team names and players when data is available
   useEffect(() => {
     if (seriesTeams && seriesTeams.length >= 2) {
-      // Use captain names instead of team names for display
-      setTeam1Name(seriesTeams[0]?.captain?.name || seriesTeams[0]?.name || "");
-      setTeam2Name(seriesTeams[1]?.captain?.name || seriesTeams[1]?.name || "");
+      // Use actual team names consistently
+      setTeam1Name(seriesTeams[0]?.name || "");
+      setTeam2Name(seriesTeams[1]?.name || "");
       
       // Initialize players when both teams have players loaded
       if (team1Players.length > 0 || team2Players.length > 0) {

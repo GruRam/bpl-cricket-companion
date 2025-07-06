@@ -20,7 +20,7 @@ export interface IStorage {
   updateSeries(id: number, updates: Partial<InsertSeries>): Promise<Series>;
   
   // Teams
-  getTeamsBySeries(seriesId: number): Promise<(Team & { captain: Player })[]>;
+  getTeamsBySeries(seriesId: number): Promise<Team[]>;
   createTeam(team: InsertTeam): Promise<Team>;
   updateTeam(id: number, updates: Partial<InsertTeam>): Promise<Team>;
   
@@ -98,13 +98,8 @@ export class DatabaseStorage implements IStorage {
     return updatedSeries;
   }
 
-  async getTeamsBySeries(seriesId: number): Promise<(Team & { captain: Player })[]> {
-    return await db
-      .select()
-      .from(teams)
-      .innerJoin(players, eq(teams.captainId, players.id))
-      .where(eq(teams.seriesId, seriesId))
-      .then(rows => rows.map(row => ({ ...row.teams, captain: row.players })));
+  async getTeamsBySeries(seriesId: number): Promise<Team[]> {
+    return await db.select().from(teams).where(eq(teams.seriesId, seriesId));
   }
 
   async createTeam(team: InsertTeam): Promise<Team> {
@@ -221,13 +216,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getSeriesProgress(seriesId: number): Promise<{ team1Wins: number; team2Wins: number; team1: Team; team2: Team }> {
-    const teamsWithCaptains = await this.getTeamsBySeries(seriesId);
-    if (teamsWithCaptains.length < 2) {
+    const teams = await this.getTeamsBySeries(seriesId);
+    if (teams.length < 2) {
       throw new Error('Series must have at least 2 teams');
     }
-
-    // Extract team data without captain for compatibility
-    const teams = teamsWithCaptains.map(({ captain, ...team }) => team);
 
     return {
       team1: teams[0],

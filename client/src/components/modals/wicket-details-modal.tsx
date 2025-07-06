@@ -102,11 +102,13 @@ export default function WicketDetailsModal({ isOpen, onClose, match }: WicketDet
                   <SelectValue placeholder="Select fielder" />
                 </SelectTrigger>
                 <SelectContent>
-                  {bowlingPlayers.map(player => (
-                    <SelectItem key={player.id} value={player.id.toString()}>
-                      {player.name}
-                    </SelectItem>
-                  ))}
+                  {bowlingPlayers
+                    .filter(player => player.id !== match.striker.id && player.id !== match.nonStriker.id)
+                    .map(player => (
+                      <SelectItem key={player.id} value={player.id.toString()}>
+                        {player.name}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>

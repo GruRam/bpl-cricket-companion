@@ -99,19 +99,13 @@ export default function MatchSetupModal({ isOpen, onClose, onMatchStart, activeS
 
   const canProceed = () => {
     if (currentStep === 1) return team1Name && team2Name; // Basic settings with team names loaded
-    if (currentStep === 2) return true; // Team customization
-    if (currentStep === 3) {
-      // Final setup - ensure we have selected players
-      return striker && nonStriker && bowler &&
-             getActiveTeam1Players().length > 0 && 
-             getActiveTeam2Players().length > 0;
-    }
+    if (currentStep === 2) return getActiveTeam1Players().length > 0 && getActiveTeam2Players().length > 0; // Team customization
     return false;
   };
 
   const handleNext = () => {
     if (canProceed()) {
-      setCurrentStep(prev => Math.min(prev + 1, 3));
+      setCurrentStep(prev => Math.min(prev + 1, 2));
     }
   };
 
@@ -130,6 +124,10 @@ export default function MatchSetupModal({ isOpen, onClose, onMatchStart, activeS
       { id: seriesTeams![1].id, name: team2Name } : 
       { id: seriesTeams![0].id, name: team1Name };
 
+    // Get batting team players for default selections
+    const battingPlayers = firstBattingTeam === "team1" ? getActiveTeam1Players() : getActiveTeam2Players();
+    const bowlingPlayers = firstBattingTeam === "team1" ? getActiveTeam2Players() : getActiveTeam1Players();
+
     const match: CurrentMatch = {
       id: Date.now(),
       team1: { id: seriesTeams![0].id, name: team1Name },
@@ -140,9 +138,9 @@ export default function MatchSetupModal({ isOpen, onClose, onMatchStart, activeS
       score: { runs: 0, wickets: 0, overs: 0, balls: 0 },
       currentOver: 1,
       currentBall: 1,
-      striker: striker!,
-      nonStriker: nonStriker!,
-      bowler: bowler!,
+      striker: battingPlayers[0]?.player || { id: 0, name: "Unknown" },
+      nonStriker: battingPlayers[1]?.player || { id: 0, name: "Unknown" },
+      bowler: bowlingPlayers[0]?.player || { id: 0, name: "Unknown" },
     };
 
     onMatchStart(match);
@@ -345,77 +343,7 @@ export default function MatchSetupModal({ isOpen, onClose, onMatchStart, activeS
             </div>
           )}
 
-          {currentStep === 3 && (
-            <div className="space-y-6">
-              <div className="text-center">
-                <h3 className="text-lg font-semibold mb-2">Final Setup</h3>
-                <p className="text-sm text-muted-foreground">Select starting players</p>
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <Label>Striker</Label>
-                  <Select value={striker?.id.toString() || ""} onValueChange={(value) => {
-                    const player = getActiveTeam1Players().find(mp => mp.player.id === parseInt(value))?.player;
-                    setStriker(player || null);
-                  }}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select striker" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {getActiveTeam1Players()
-                        .filter(({ player }) => player.id !== nonStriker?.id)
-                        .map(({ player }) => (
-                          <SelectItem key={player.id} value={player.id.toString()}>
-                            {player.name}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label>Non-Striker</Label>
-                  <Select value={nonStriker?.id.toString() || ""} onValueChange={(value) => {
-                    const player = getActiveTeam1Players().find(mp => mp.player.id === parseInt(value))?.player;
-                    setNonStriker(player || null);
-                  }}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select non-striker" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {getActiveTeam1Players()
-                        .filter(({ player }) => player.id !== striker?.id)
-                        .map(({ player }) => (
-                          <SelectItem key={player.id} value={player.id.toString()}>
-                            {player.name}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label>Bowler</Label>
-                  <Select value={bowler?.id.toString() || ""} onValueChange={(value) => {
-                    const player = getActiveTeam2Players().find(mp => mp.player.id === parseInt(value))?.player;
-                    setBowler(player || null);
-                  }}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select bowler" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {getActiveTeam2Players().map(({ player }) => (
-                        <SelectItem key={player.id} value={player.id.toString()}>
-                          {player.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
 
         <div className="flex justify-between">
@@ -429,7 +357,7 @@ export default function MatchSetupModal({ isOpen, onClose, onMatchStart, activeS
           </Button>
           
           <div className="flex gap-2">
-            {currentStep < 3 ? (
+            {currentStep < 2 ? (
               <Button onClick={handleNext} disabled={!canProceed()}>
                 Next
                 <ArrowRight className="h-4 w-4 ml-2" />

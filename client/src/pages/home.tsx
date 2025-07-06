@@ -112,21 +112,7 @@ export default function Home() {
           </Card>
         </Link>
 
-        <Link href="/stats">
-          <Card className="hover:shadow-md transition-shadow cursor-pointer">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-800">View Stats</h3>
-                  <p className="text-gray-600">Player & team statistics</p>
-                </div>
-                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                  <BarChart3 className="w-6 h-6 text-blue-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
+
       </div>
 
       {/* Series Progress */}

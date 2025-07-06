@@ -278,11 +278,13 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick }: BallB
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {battingPlayers.map((player) => (
-                      <SelectItem key={player.id} value={player.id.toString()}>
-                        {player.name}
-                      </SelectItem>
-                    ))}
+                    {battingPlayers
+                      .filter(player => player.id !== nonStriker?.id && player.id !== bowler?.id)
+                      .map((player) => (
+                        <SelectItem key={player.id} value={player.id.toString()}>
+                          {player.name}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -299,11 +301,13 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick }: BallB
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {battingPlayers.map((player) => (
-                      <SelectItem key={player.id} value={player.id.toString()}>
-                        {player.name}
-                      </SelectItem>
-                    ))}
+                    {battingPlayers
+                      .filter(player => player.id !== striker?.id && player.id !== bowler?.id)
+                      .map((player) => (
+                        <SelectItem key={player.id} value={player.id.toString()}>
+                          {player.name}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -322,11 +326,13 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick }: BallB
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {bowlingPlayers.map((player) => (
-                    <SelectItem key={player.id} value={player.id.toString()}>
-                      {player.name}
-                    </SelectItem>
-                  ))}
+                  {bowlingPlayers
+                    .filter(player => player.id !== striker?.id && player.id !== nonStriker?.id)
+                    .map((player) => (
+                      <SelectItem key={player.id} value={player.id.toString()}>
+                        {player.name}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>

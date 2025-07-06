@@ -44,6 +44,13 @@ export default function MatchSetupModal({ isOpen, onClose, onMatchStart, activeS
     enabled: !!activeSeries?.id && isOpen,
   });
 
+  // Debug log when teams data changes
+  useEffect(() => {
+    if (seriesTeams) {
+      console.log("Teams fetched:", seriesTeams);
+    }
+  }, [seriesTeams]);
+
   // Fetch team players
   const { data: team1Players = [] } = useQuery<Player[]>({
     queryKey: ["/api/teams", seriesTeams?.[0]?.id, "players"],
@@ -61,6 +68,7 @@ export default function MatchSetupModal({ isOpen, onClose, onMatchStart, activeS
   useEffect(() => {
     if (seriesTeams && seriesTeams.length >= 2) {
       // Use actual team names consistently
+      console.log("Setting team names:", seriesTeams);
       setTeam1Name(seriesTeams[0]?.name || "");
       setTeam2Name(seriesTeams[1]?.name || "");
       

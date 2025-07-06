@@ -79,9 +79,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/series/:id/teams", async (req, res) => {
     try {
       const seriesId = parseInt(req.params.id);
+      console.log("Fetching teams for series:", seriesId);
       const teams = await storage.getTeamsBySeries(seriesId);
+      console.log("Found teams:", teams);
       res.json(teams);
     } catch (error) {
+      console.error("Error fetching teams:", error);
       res.status(500).json({ error: "Failed to fetch teams" });
     }
   });

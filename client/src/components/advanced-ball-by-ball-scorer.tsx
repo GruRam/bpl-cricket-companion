@@ -108,12 +108,12 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
       const wicketDetails = pendingWicketDetails;
       if (wicketDetails) {
         const dismissalType = wicketDetails.dismissalType;
-        const batsmanOut = wicketDetails.batsmanOut === 'striker' ? striker : nonStriker.name;
+        const batsmanOut = wicketDetails.batsmanOut === 'striker' ? striker?.name || 'Unknown' : nonStriker?.name || 'Unknown';
         commentary += ` - OUT! ${batsmanOut} ${dismissalType}`;
         if (wicketDetails.fielder) {
           const fielderPlayer = bowlingPlayers.find(p => p.id.toString() === wicketDetails.fielder);
           if (fielderPlayer) {
-            commentary += ` (caught by ${fielderPlayer.name})`;
+            commentary += ` (by ${fielderPlayer.name})`;
           }
         }
       } else {
@@ -310,12 +310,12 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
                   <User className="h-4 w-4" />
                   Striker *
                 </Label>
-                <Select value={striker?.id.toString()} onValueChange={(value) => {
+                <Select value={striker?.id ? striker.id.toString() : ""} onValueChange={(value) => {
                   const player = battingPlayers.find(p => p.id === parseInt(value));
                   if (player) setStriker(player);
                 }}>
                   <SelectTrigger className="mt-1">
-                    <SelectValue />
+                    <SelectValue placeholder="Select striker" />
                   </SelectTrigger>
                   <SelectContent>
                     {battingPlayers
@@ -333,12 +333,12 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
                   <User className="h-4 w-4" />
                   Non-Striker
                 </Label>
-                <Select value={nonStriker?.id.toString()} onValueChange={(value) => {
+                <Select value={nonStriker?.id ? nonStriker.id.toString() : ""} onValueChange={(value) => {
                   const player = battingPlayers.find(p => p.id === parseInt(value));
                   if (player) setNonStriker(player);
                 }}>
                   <SelectTrigger className="mt-1">
-                    <SelectValue />
+                    <SelectValue placeholder="Select non-striker" />
                   </SelectTrigger>
                   <SelectContent>
                     {battingPlayers
@@ -358,12 +358,12 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
                 <Circle className="h-4 w-4" />
                 Bowler
               </Label>
-              <Select value={bowler?.id.toString()} onValueChange={(value) => {
+              <Select value={bowler?.id ? bowler.id.toString() : ""} onValueChange={(value) => {
                 const player = bowlingPlayers.find(p => p.id === parseInt(value));
                 if (player) setBowler(player);
               }}>
                 <SelectTrigger className="mt-1">
-                  <SelectValue />
+                  <SelectValue placeholder="Select bowler" />
                 </SelectTrigger>
                 <SelectContent>
                   {bowlingPlayers
@@ -595,6 +595,18 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
         isOpen={showWicketModal}
         onClose={() => setShowWicketModal(false)}
         match={match}
+        currentStriker={striker?.id ? { 
+          id: striker.id, 
+          name: striker.name, 
+          isActive: null, 
+          createdAt: null 
+        } : undefined}
+        currentNonStriker={nonStriker?.id ? { 
+          id: nonStriker.id, 
+          name: nonStriker.name, 
+          isActive: null, 
+          createdAt: null 
+        } : undefined}
         onWicketSubmit={handleWicketDetails}
       />
     </div>

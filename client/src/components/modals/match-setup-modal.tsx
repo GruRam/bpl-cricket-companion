@@ -138,9 +138,9 @@ export default function MatchSetupModal({ isOpen, onClose, onMatchStart, activeS
       score: { runs: 0, wickets: 0, overs: 0, balls: 0 },
       currentOver: 1,
       currentBall: 1,
-      striker: battingPlayers[0]?.player || { id: 0, name: "Unknown" },
-      nonStriker: battingPlayers[1]?.player || { id: 0, name: "Unknown" },
-      bowler: bowlingPlayers[0]?.player || { id: 0, name: "Unknown" },
+      striker: { id: 0, name: "" },
+      nonStriker: { id: 0, name: "" },
+      bowler: { id: 0, name: "" },
     };
 
     onMatchStart(match);

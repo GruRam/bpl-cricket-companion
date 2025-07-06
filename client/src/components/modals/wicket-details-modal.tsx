@@ -11,6 +11,8 @@ interface WicketDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
   match: CurrentMatch;
+  currentStriker?: Player;
+  currentNonStriker?: Player;
   onWicketSubmit?: (wicketDetails: {
     batsmanOut: string;
     dismissalType: string;
@@ -18,7 +20,7 @@ interface WicketDetailsModalProps {
   }) => void;
 }
 
-export default function WicketDetailsModal({ isOpen, onClose, match, onWicketSubmit }: WicketDetailsModalProps) {
+export default function WicketDetailsModal({ isOpen, onClose, match, currentStriker, currentNonStriker, onWicketSubmit }: WicketDetailsModalProps) {
   const [batsmanOut, setBatsmanOut] = useState("");
   const [dismissalType, setDismissalType] = useState("");
   const [fielder, setFielder] = useState("");
@@ -79,31 +81,17 @@ export default function WicketDetailsModal({ isOpen, onClose, match, onWicketSub
                 <SelectValue placeholder="Select batsman" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="striker">{match.striker.name}</SelectItem>
-                <SelectItem value="non-striker">{match.nonStriker.name}</SelectItem>
+                {currentStriker && currentStriker.name && (
+                  <SelectItem value="striker">{currentStriker.name}</SelectItem>
+                )}
+                {currentNonStriker && currentNonStriker.name && (
+                  <SelectItem value="non-striker">{currentNonStriker.name}</SelectItem>
+                )}
               </SelectContent>
             </Select>
           </div>
 
-          <div>
-            <Label>Dismissal Type</Label>
-            <div className="grid grid-cols-2 gap-2 mt-2">
-              {dismissalTypes.map((type) => (
-                <Button
-                  key={type}
-                  variant={dismissalType === type ? "default" : "outline"}
-                  onClick={() => setDismissalType(type)}
-                  className={`text-sm ${
-                    dismissalType === type
-                      ? "bg-purple-600 hover:bg-purple-700"
-                      : ""
-                  }`}
-                >
-                  {type}
-                </Button>
-              ))}
-            </div>
-          </div>
+          
 
           {fielderRequired && (
             <div>
@@ -114,7 +102,10 @@ export default function WicketDetailsModal({ isOpen, onClose, match, onWicketSub
                 </SelectTrigger>
                 <SelectContent>
                   {bowlingPlayers
-                    .filter(player => player.id !== match.striker.id && player.id !== match.nonStriker.id)
+                    .filter(player => 
+                      (currentStriker ? player.id !== currentStriker.id : true) && 
+                      (currentNonStriker ? player.id !== currentNonStriker.id : true)
+                    )
                     .map(player => (
                       <SelectItem key={player.id} value={player.id.toString()}>
                         {player.name}

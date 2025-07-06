@@ -116,4 +116,21 @@ Changelog:
   * Improved quick entry buttons with all run options (0-6)
   * Added batsman swap functionality
   * Integrated bowler selection for each over
+
+- July 06, 2025. Major workflow improvements:
+  * Removed series name requirement - auto-generates from captains
+  * Added captain randomizer with manual selection option
+  * Implemented comprehensive match setup modal with 3 steps:
+    - Basic settings (overs per side, first batting team)
+    - Team customization with player status options:
+      * Switch teams
+      * Make common player (plays for both teams)
+      * Mark unavailable for match
+    - Final setup (striker, non-striker, bowler selection)
+  * Enhanced wicket modal with contextual player dropdowns
+  * Removed LBW, added Boundary Out dismissal type
+  * Added active series context display on match page
+  * Fixed infinite API call loops
+  * Team names always reflect captain names (no editing)
+  * Common player concept: match wins for either team, series wins only for original team
 ```

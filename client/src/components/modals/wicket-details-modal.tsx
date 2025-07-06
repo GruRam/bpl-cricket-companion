@@ -22,7 +22,7 @@ export default function WicketDetailsModal({ isOpen, onClose, match }: WicketDet
   const { data: bowlingPlayers = [] } = useQuery<Player[]>({
     queryKey: ["/api/teams", match.bowlingTeam.id, "players"],
     select: (data: any) => data.map((tp: any) => tp.player).sort((a: Player, b: Player) => a.name.localeCompare(b.name)),
-    enabled: isOpen,
+    enabled: isOpen && !!match.bowlingTeam.id,
   });
 
   const dismissalTypes = [

@@ -149,7 +149,7 @@ export default function Home() {
                   />
                 </div>
                 <div className="text-center text-sm text-gray-600 mt-2">
-                  First to {activeSeries.targetWins} wins
+                  First to {activeSeries.targetWins || 13} wins
                 </div>
               </div>
               <div className="text-center">

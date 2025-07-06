@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Play, Settings } from "lucide-react";
-import BallByBallScorer from "@/components/enhanced-ball-by-ball-scorer";
+import BallByBallScorer from "@/components/ball-by-ball-scorer";
 import WicketDetailsModal from "@/components/modals/wicket-details-modal";
 import MatchSetupModal from "@/components/modals/match-setup-modal";
 import type { CurrentMatch } from "@/lib/types";
@@ -51,15 +51,20 @@ export default function Match() {
           <div className="space-y-6">
             {activeSeries ? (
               <div className="text-center">
-                <p className="text-gray-600 mb-6">
-                  Ready to start a new match in the active series
-                </p>
+                <div className="mb-4">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                    Active Series: {activeSeries.name}
+                  </h3>
+                  <p className="text-gray-600 mb-6">
+                    Set new match under this series
+                  </p>
+                </div>
                 <Button
                   onClick={() => setShowSetupModal(true)}
                   className="flex items-center space-x-2"
                 >
                   <Play className="w-4 h-4" />
-                  <span>Setup New Match</span>
+                  <span>Match Setup</span>
                 </Button>
               </div>
             ) : (

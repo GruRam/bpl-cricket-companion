@@ -2,11 +2,11 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowRight, ArrowLeft, Users, Play, Settings } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { ArrowRight, ArrowLeft, Users, Play, Settings, Shuffle, UserX } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Player, Team } from "@shared/schema";
 import type { CurrentMatch } from "@/lib/types";
@@ -18,14 +18,20 @@ interface MatchSetupModalProps {
   activeSeries: any;
 }
 
+type PlayerStatus = "team1" | "team2" | "common" | "unavailable";
+
+interface MatchPlayer {
+  player: Player;
+  status: PlayerStatus;
+  originalTeam: "team1" | "team2";
+}
+
 export default function MatchSetupModal({ isOpen, onClose, onMatchStart, activeSeries }: MatchSetupModalProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [oversPerSide, setOversPerSide] = useState(8);
+  const [matchPlayers, setMatchPlayers] = useState<MatchPlayer[]>([]);
   const [team1Name, setTeam1Name] = useState("");
   const [team2Name, setTeam2Name] = useState("");
-  const [team1Players, setTeam1Players] = useState<Player[]>([]);
-  const [team2Players, setTeam2Players] = useState<Player[]>([]);
-  const [availablePlayers, setAvailablePlayers] = useState<Player[]>([]);
   const [firstBattingTeam, setFirstBattingTeam] = useState<"team1" | "team2">("team1");
   const [striker, setStriker] = useState<Player | null>(null);
   const [nonStriker, setNonStriker] = useState<Player | null>(null);
@@ -38,283 +44,128 @@ export default function MatchSetupModal({ isOpen, onClose, onMatchStart, activeS
     enabled: !!activeSeries?.id && isOpen,
   });
 
-  // Fetch all players
-  const { data: allPlayers = [] } = useQuery<Player[]>({
-    queryKey: ["/api/players"],
-    enabled: isOpen,
+  // Fetch team players
+  const { data: team1Players = [] } = useQuery<Player[]>({
+    queryKey: ["/api/teams", seriesTeams?.[0]?.id, "players"],
+    select: (data: any) => data?.map((tp: any) => tp.player) || [],
+    enabled: !!seriesTeams?.[0]?.id && isOpen,
   });
 
-  // Sort players alphabetically
-  const sortedPlayers = [...allPlayers].sort((a, b) => a.name.localeCompare(b.name));
+  const { data: team2Players = [] } = useQuery<Player[]>({
+    queryKey: ["/api/teams", seriesTeams?.[1]?.id, "players"],
+    select: (data: any) => data?.map((tp: any) => tp.player) || [],
+    enabled: !!seriesTeams?.[1]?.id && isOpen,
+  });
 
-  // Initialize teams and players when modal opens
+  // Initialize match players when data is available
   useEffect(() => {
-    if (seriesTeams && seriesTeams.length >= 2 && isOpen) {
-      setTeam1Name(seriesTeams[0].name);
-      setTeam2Name(seriesTeams[1].name);
-      
-      // Fetch team players and initialize
-      Promise.all([
-        fetch(`/api/teams/${seriesTeams[0].id}/players`).then(res => res.json()),
-        fetch(`/api/teams/${seriesTeams[1].id}/players`).then(res => res.json())
-      ]).then(([team1PlayersData, team2PlayersData]) => {
-        const team1Players = team1PlayersData.map((tp: any) => tp.player);
-        const team2Players = team2PlayersData.map((tp: any) => tp.player);
-        
-        setTeam1Players(team1Players);
-        setTeam2Players(team2Players);
-        
-        // Set available players as those not in either team
-        const usedPlayerIds = new Set([...team1Players, ...team2Players].map(p => p.id));
-        setAvailablePlayers(sortedPlayers.filter(p => !usedPlayerIds.has(p.id)));
-      });
+    if (seriesTeams && team1Players.length > 0 && team2Players.length > 0) {
+      const initialMatchPlayers: MatchPlayer[] = [
+        ...team1Players.map(player => ({
+          player,
+          status: "team1" as PlayerStatus,
+          originalTeam: "team1" as const
+        })),
+        ...team2Players.map(player => ({
+          player,
+          status: "team2" as PlayerStatus,
+          originalTeam: "team2" as const
+        }))
+      ];
+
+      setMatchPlayers(initialMatchPlayers.sort((a, b) => a.player.name.localeCompare(b.player.name)));
+      setTeam1Name(seriesTeams[0]?.name || "");
+      setTeam2Name(seriesTeams[1]?.name || "");
     }
-  }, [seriesTeams, isOpen, sortedPlayers]);
+  }, [seriesTeams, team1Players, team2Players]);
 
-  const resetForm = () => {
-    setCurrentStep(1);
-    setOversPerSide(8);
-    setTeam1Name("");
-    setTeam2Name("");
-    setTeam1Players([]);
-    setTeam2Players([]);
-    setAvailablePlayers([]);
-    setFirstBattingTeam("team1");
-    setStriker(null);
-    setNonStriker(null);
-    setBowler(null);
+  const changePlayerStatus = (playerId: number, newStatus: PlayerStatus) => {
+    setMatchPlayers(prev =>
+      prev.map(mp =>
+        mp.player.id === playerId ? { ...mp, status: newStatus } : mp
+      )
+    );
   };
 
-  const handleClose = () => {
-    resetForm();
-    onClose();
-  };
+  const getActiveTeam1Players = () => matchPlayers.filter(mp => mp.status === "team1" || mp.status === "common");
+  const getActiveTeam2Players = () => matchPlayers.filter(mp => mp.status === "team2" || mp.status === "common");
 
-  const handleNextStep = () => {
-    if (currentStep === 1) {
-      if (team1Players.length === 0 || team2Players.length === 0) {
-        toast({
-          title: "Teams Required",
-          description: "Both teams must have at least one player.",
-          variant: "destructive",
-        });
-        return;
-      }
+  const canProceed = () => {
+    if (currentStep === 1) return true; // Basic settings
+    if (currentStep === 2) return true; // Team customization
+    if (currentStep === 3) {
+      // Final setup - ensure we have selected players
+      return striker && nonStriker && bowler &&
+             getActiveTeam1Players().length > 0 && 
+             getActiveTeam2Players().length > 0;
     }
-    if (currentStep === 2) {
-      if (!striker || !nonStriker || !bowler) {
-        toast({
-          title: "Players Required",
-          description: "Please select striker, non-striker, and bowler.",
-          variant: "destructive",
-        });
-        return;
-      }
-    }
-    setCurrentStep(prev => prev + 1);
+    return false;
   };
 
-  const handlePrevStep = () => {
-    setCurrentStep(prev => prev - 1);
-  };
-
-  const movePlayerToTeam = (player: Player, toTeam: 1 | 2) => {
-    if (toTeam === 1) {
-      setTeam2Players(prev => prev.filter(p => p.id !== player.id));
-      setAvailablePlayers(prev => prev.filter(p => p.id !== player.id));
-      setTeam1Players(prev => [...prev, player]);
-    } else {
-      setTeam1Players(prev => prev.filter(p => p.id !== player.id));
-      setAvailablePlayers(prev => prev.filter(p => p.id !== player.id));
-      setTeam2Players(prev => [...prev, player]);
+  const handleNext = () => {
+    if (canProceed()) {
+      setCurrentStep(prev => Math.min(prev + 1, 3));
     }
   };
 
-  const movePlayerToAvailable = (player: Player) => {
-    setTeam1Players(prev => prev.filter(p => p.id !== player.id));
-    setTeam2Players(prev => prev.filter(p => p.id !== player.id));
-    setAvailablePlayers(prev => [...prev, player]);
+  const handlePrevious = () => {
+    setCurrentStep(prev => Math.max(prev - 1, 1));
   };
 
   const handleStartMatch = () => {
-    if (!striker || !nonStriker || !bowler) return;
+    if (!canProceed()) return;
 
     const battingTeam = firstBattingTeam === "team1" ? 
-      { id: 1, name: team1Name } : 
-      { id: 2, name: team2Name };
+      { id: seriesTeams![0].id, name: team1Name } : 
+      { id: seriesTeams![1].id, name: team2Name };
     
     const bowlingTeam = firstBattingTeam === "team1" ? 
-      { id: 2, name: team2Name } : 
-      { id: 1, name: team1Name };
+      { id: seriesTeams![1].id, name: team2Name } : 
+      { id: seriesTeams![0].id, name: team1Name };
 
     const match: CurrentMatch = {
       id: Date.now(),
-      team1: { id: 1, name: team1Name },
-      team2: { id: 2, name: team2Name },
+      team1: { id: seriesTeams![0].id, name: team1Name },
+      team2: { id: seriesTeams![1].id, name: team2Name },
       currentInnings: 1,
       battingTeam,
       bowlingTeam,
       score: { runs: 0, wickets: 0, overs: 0, balls: 0 },
       currentOver: 1,
       currentBall: 1,
-      striker,
-      nonStriker,
-      bowler,
+      striker: striker!,
+      nonStriker: nonStriker!,
+      bowler: bowler!,
     };
 
     onMatchStart(match);
-    handleClose();
+    onClose();
   };
 
   const renderStep1 = () => (
     <div className="space-y-6">
-      <div className="space-y-4">
-        <div>
-          <Label htmlFor="oversPerSide">Overs per Side</Label>
-          <Input
-            id="oversPerSide"
-            type="number"
-            value={oversPerSide}
-            onChange={(e) => setOversPerSide(Number(e.target.value))}
-            min={1}
-            max={50}
-          />
-        </div>
-      </div>
-
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Customize Teams for This Match</h3>
-        <p className="text-sm text-gray-600">Make changes to team composition for this match only</p>
-        
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="team1Name">Team 1 Name</Label>
-            <Input
-              id="team1Name"
-              value={team1Name}
-              onChange={(e) => setTeam1Name(e.target.value)}
-              placeholder="Enter team 1 name"
-            />
-          </div>
-          <div>
-            <Label htmlFor="team2Name">Team 2 Name</Label>
-            <Input
-              id="team2Name"
-              value={team2Name}
-              onChange={(e) => setTeam2Name(e.target.value)}
-              placeholder="Enter team 2 name"
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-3 gap-4 max-h-96 overflow-y-auto">
-          {/* Team 1 */}
-          <div className="space-y-3">
-            <Label className="text-sm font-medium text-purple-700 flex items-center gap-2">
-              <Users className="w-4 h-4" />
-              {team1Name || "Team 1"}
-            </Label>
-            <div className="space-y-2 min-h-[250px] p-3 bg-purple-50 rounded-lg border-2 border-dashed border-purple-200">
-              {team1Players.map(player => (
-                <Card key={player.id} className="bg-white">
-                  <CardContent className="p-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">{player.name}</span>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-6 w-6 p-0"
-                        onClick={() => movePlayerToAvailable(player)}
-                      >
-                        ×
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-
-          {/* Available Players */}
-          <div className="space-y-3">
-            <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-              <Users className="w-4 h-4" />
-              Available Players
-            </Label>
-            <div className="space-y-2 min-h-[250px] p-3 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
-              {availablePlayers.sort((a, b) => a.name.localeCompare(b.name)).map(player => (
-                <Card key={player.id} className="bg-white cursor-pointer hover:bg-gray-50">
-                  <CardContent className="p-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">{player.name}</span>
-                      <div className="flex gap-1">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-6 w-6 p-0 text-purple-600 hover:bg-purple-50"
-                          onClick={() => movePlayerToTeam(player, 1)}
-                        >
-                          <ArrowLeft className="w-3 h-3" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-6 w-6 p-0 text-green-600 hover:bg-green-50"
-                          onClick={() => movePlayerToTeam(player, 2)}
-                        >
-                          <ArrowRight className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-
-          {/* Team 2 */}
-          <div className="space-y-3">
-            <Label className="text-sm font-medium text-green-700 flex items-center gap-2">
-              <Users className="w-4 h-4" />
-              {team2Name || "Team 2"}
-            </Label>
-            <div className="space-y-2 min-h-[250px] p-3 bg-green-50 rounded-lg border-2 border-dashed border-green-200">
-              {team2Players.map(player => (
-                <Card key={player.id} className="bg-white">
-                  <CardContent className="p-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">{player.name}</span>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-6 w-6 p-0"
-                        onClick={() => movePlayerToAvailable(player)}
-                      >
-                        ×
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderStep2 = () => (
-    <div className="space-y-6">
       <div className="text-center">
-        <h3 className="text-lg font-semibold">Choose First Batting Team & Players</h3>
-        <p className="text-sm text-gray-600">Select which team bats first and the opening players</p>
+        <h3 className="text-lg font-semibold mb-2">Match Setup</h3>
+        <p className="text-sm text-muted-foreground">Active Series: {activeSeries?.name}</p>
       </div>
 
       <div className="space-y-4">
         <div>
-          <Label className="text-sm font-medium text-gray-700 mb-2">
-            First Batting Team
-          </Label>
+          <Label htmlFor="overs">Overs per side</Label>
+          <Select value={oversPerSide.toString()} onValueChange={(value) => setOversPerSide(parseInt(value))}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {[5, 6, 7, 8, 9, 10, 12, 15, 20].map(overs => (
+                <SelectItem key={overs} value={overs.toString()}>{overs} overs</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <Label>First batting team</Label>
           <Select value={firstBattingTeam} onValueChange={(value: "team1" | "team2") => setFirstBattingTeam(value)}>
             <SelectTrigger>
               <SelectValue />
@@ -325,88 +176,195 @@ export default function MatchSetupModal({ isOpen, onClose, onMatchStart, activeS
             </SelectContent>
           </Select>
         </div>
+      </div>
+    </div>
+  );
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label className="text-sm font-medium text-gray-700 mb-2">
-              Striker
-            </Label>
-            <Select
-              value={striker?.id.toString() || ""}
-              onValueChange={(value) => {
-                const battingPlayers = firstBattingTeam === "team1" ? team1Players : team2Players;
-                const player = battingPlayers.find(p => p.id.toString() === value);
-                if (player) setStriker(player);
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select striker" />
-              </SelectTrigger>
-              <SelectContent>
-                {(firstBattingTeam === "team1" ? team1Players : team2Players)
-                  .filter(p => p.id !== nonStriker?.id)
-                  .sort((a, b) => a.name.localeCompare(b.name))
-                  .map(player => (
-                    <SelectItem key={player.id} value={player.id.toString()}>
-                      {player.name}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
-          </div>
+  const renderStep2 = () => (
+    <div className="space-y-6">
+      <div className="text-center">
+        <h3 className="text-lg font-semibold mb-2">Customize Teams for this Match</h3>
+        <p className="text-sm text-muted-foreground">Modify player assignments for this match only</p>
+      </div>
 
-          <div>
-            <Label className="text-sm font-medium text-gray-700 mb-2">
-              Non-Striker
-            </Label>
-            <Select
-              value={nonStriker?.id.toString() || ""}
-              onValueChange={(value) => {
-                const battingPlayers = firstBattingTeam === "team1" ? team1Players : team2Players;
-                const player = battingPlayers.find(p => p.id.toString() === value);
-                if (player) setNonStriker(player);
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select non-striker" />
-              </SelectTrigger>
-              <SelectContent>
-                {(firstBattingTeam === "team1" ? team1Players : team2Players)
-                  .filter(p => p.id !== striker?.id)
-                  .sort((a, b) => a.name.localeCompare(b.name))
-                  .map(player => (
-                    <SelectItem key={player.id} value={player.id.toString()}>
-                      {player.name}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
-          </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              {team1Name}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {getActiveTeam1Players().map(({ player, status, originalTeam }) => (
+              <div key={player.id} className="flex items-center justify-between p-2 bg-muted rounded">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">{player.name}</span>
+                  {status === "common" && <Badge variant="secondary">Common</Badge>}
+                  {originalTeam !== "team1" && <Badge variant="outline">Switched</Badge>}
+                </div>
+                <div className="flex gap-1">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => changePlayerStatus(player.id, "team2")}
+                  >
+                    <Shuffle className="h-3 w-3" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => changePlayerStatus(player.id, "common")}
+                  >
+                    <Users className="h-3 w-3" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => changePlayerStatus(player.id, "unavailable")}
+                  >
+                    <UserX className="h-3 w-3" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              {team2Name}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {getActiveTeam2Players().map(({ player, status, originalTeam }) => (
+              <div key={player.id} className="flex items-center justify-between p-2 bg-muted rounded">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">{player.name}</span>
+                  {status === "common" && <Badge variant="secondary">Common</Badge>}
+                  {originalTeam !== "team2" && <Badge variant="outline">Switched</Badge>}
+                </div>
+                <div className="flex gap-1">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => changePlayerStatus(player.id, "team1")}
+                  >
+                    <Shuffle className="h-3 w-3" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => changePlayerStatus(player.id, "common")}
+                  >
+                    <Users className="h-3 w-3" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => changePlayerStatus(player.id, "unavailable")}
+                  >
+                    <UserX className="h-3 w-3" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      </div>
+
+      {matchPlayers.filter(mp => mp.status === "unavailable").length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <UserX className="h-4 w-4" />
+              Unavailable Players
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2">
+              {matchPlayers.filter(mp => mp.status === "unavailable").map(({ player, originalTeam }) => (
+                <div key={player.id} className="flex items-center gap-2 p-2 bg-muted rounded">
+                  <span className="font-medium">{player.name}</span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => changePlayerStatus(player.id, originalTeam)}
+                  >
+                    Restore
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+
+  const renderStep3 = () => (
+    <div className="space-y-6">
+      <div className="text-center">
+        <h3 className="text-lg font-semibold mb-2">Final Setup</h3>
+        <p className="text-sm text-muted-foreground">Select starting players</p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <Label>Striker</Label>
+          <Select value={striker?.id.toString() || ""} onValueChange={(value) => {
+            const player = getActiveTeam1Players().find(mp => mp.player.id === parseInt(value))?.player;
+            setStriker(player || null);
+          }}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select striker" />
+            </SelectTrigger>
+            <SelectContent>
+              {getActiveTeam1Players().map(({ player }) => (
+                <SelectItem key={player.id} value={player.id.toString()}>
+                  {player.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div>
-          <Label className="text-sm font-medium text-gray-700 mb-2">
-            Opening Bowler
-          </Label>
-          <Select
-            value={bowler?.id.toString() || ""}
-            onValueChange={(value) => {
-              const bowlingPlayers = firstBattingTeam === "team1" ? team2Players : team1Players;
-              const player = bowlingPlayers.find(p => p.id.toString() === value);
-              if (player) setBowler(player);
-            }}
-          >
+          <Label>Non-Striker</Label>
+          <Select value={nonStriker?.id.toString() || ""} onValueChange={(value) => {
+            const player = getActiveTeam1Players().find(mp => mp.player.id === parseInt(value))?.player;
+            setNonStriker(player || null);
+          }}>
             <SelectTrigger>
-              <SelectValue placeholder="Select opening bowler" />
+              <SelectValue placeholder="Select non-striker" />
             </SelectTrigger>
             <SelectContent>
-              {(firstBattingTeam === "team1" ? team2Players : team1Players)
-                .sort((a, b) => a.name.localeCompare(b.name))
-                .map(player => (
-                  <SelectItem key={player.id} value={player.id.toString()}>
-                    {player.name}
-                  </SelectItem>
-                ))}
+              {getActiveTeam1Players().map(({ player }) => (
+                <SelectItem key={player.id} value={player.id.toString()}>
+                  {player.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <Label>Bowler</Label>
+          <Select value={bowler?.id.toString() || ""} onValueChange={(value) => {
+            const player = getActiveTeam2Players().find(mp => mp.player.id === parseInt(value))?.player;
+            setBowler(player || null);
+          }}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select bowler" />
+            </SelectTrigger>
+            <SelectContent>
+              {getActiveTeam2Players().map(({ player }) => (
+                <SelectItem key={player.id} value={player.id.toString()}>
+                  {player.name}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -415,44 +373,43 @@ export default function MatchSetupModal({ isOpen, onClose, onMatchStart, activeS
   );
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-6xl max-h-[90vh] overflow-y-auto">
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Match Setup - Step {currentStep} of 2</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <Settings className="h-5 w-5" />
+            Match Setup
+          </DialogTitle>
           <DialogDescription>
-            {currentStep === 1 && "Configure match settings and customize teams"}
-            {currentStep === 2 && "Select first batting team and opening players"}
+            Step {currentStep} of 3
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="py-4">
           {currentStep === 1 && renderStep1()}
           {currentStep === 2 && renderStep2()}
+          {currentStep === 3 && renderStep3()}
+        </div>
 
-          <div className="flex justify-between pt-4 border-t">
-            <Button
-              variant="outline"
-              onClick={handlePrevStep}
-              disabled={currentStep === 1}
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Previous
-            </Button>
-
-            {currentStep < 2 ? (
-              <Button
-                onClick={handleNextStep}
-                disabled={team1Players.length === 0 || team2Players.length === 0}
-              >
+        <div className="flex justify-between">
+          <Button
+            variant="outline"
+            onClick={handlePrevious}
+            disabled={currentStep === 1}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Previous
+          </Button>
+          
+          <div className="flex gap-2">
+            {currentStep < 3 ? (
+              <Button onClick={handleNext}>
                 Next
-                <ArrowRight className="w-4 h-4 ml-2" />
+                <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
             ) : (
-              <Button
-                onClick={handleStartMatch}
-                disabled={!striker || !nonStriker || !bowler}
-              >
-                <Play className="w-4 h-4 mr-2" />
+              <Button onClick={handleStartMatch} disabled={!canProceed()}>
+                <Play className="h-4 w-4 mr-2" />
                 Start Match
               </Button>
             )}

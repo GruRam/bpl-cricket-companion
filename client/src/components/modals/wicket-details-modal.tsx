@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import type { CurrentMatch } from "@/lib/types";
+import type { Player } from "@shared/schema";
 
 interface WicketDetailsModalProps {
   isOpen: boolean;
@@ -16,13 +18,20 @@ export default function WicketDetailsModal({ isOpen, onClose, match }: WicketDet
   const [dismissalType, setDismissalType] = useState("");
   const [fielder, setFielder] = useState("");
 
+  // Get bowling team players for fielder dropdown
+  const { data: bowlingPlayers = [] } = useQuery<Player[]>({
+    queryKey: ["/api/teams", match.bowlingTeam.id, "players"],
+    select: (data: any) => data.map((tp: any) => tp.player).sort((a: Player, b: Player) => a.name.localeCompare(b.name)),
+    enabled: isOpen,
+  });
+
   const dismissalTypes = [
     "Bowled",
     "Caught",
-    "LBW",
     "Run Out",
-    "Stumped",
+    "Stumped", 
     "Hit Wicket",
+    "Boundary Out",
   ];
 
   const fielderRequired = dismissalType === "Caught" || dismissalType === "Run Out" || dismissalType === "Stumped";
@@ -93,9 +102,11 @@ export default function WicketDetailsModal({ isOpen, onClose, match }: WicketDet
                   <SelectValue placeholder="Select fielder" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="fielder1">Fielder 1</SelectItem>
-                  <SelectItem value="fielder2">Fielder 2</SelectItem>
-                  <SelectItem value="fielder3">Fielder 3</SelectItem>
+                  {bowlingPlayers.map(player => (
+                    <SelectItem key={player.id} value={player.id.toString()}>
+                      {player.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

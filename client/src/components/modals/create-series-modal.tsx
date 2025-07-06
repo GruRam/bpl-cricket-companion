@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Crown, Users, ArrowRight, ArrowLeft, Shuffle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
@@ -17,7 +18,6 @@ interface CreateSeriesModalProps {
 
 export default function CreateSeriesModal({ isOpen, onClose }: CreateSeriesModalProps) {
   const [currentStep, setCurrentStep] = useState(1);
-  const [seriesName, setSeriesName] = useState("");
   const [targetWins, setTargetWins] = useState(13);
   const [captain1, setCaptain1] = useState<Player | null>(null);
   const [captain2, setCaptain2] = useState<Player | null>(null);
@@ -32,16 +32,19 @@ export default function CreateSeriesModal({ isOpen, onClose }: CreateSeriesModal
     enabled: isOpen,
   });
 
+  // Sort players alphabetically
+  const sortedPlayers = [...allPlayers].sort((a, b) => a.name.localeCompare(b.name));
+
   // Initialize available players when data loads
   useEffect(() => {
     if (allPlayers.length > 0 && isOpen) {
-      setAvailablePlayers([...allPlayers]);
+      setAvailablePlayers([...sortedPlayers]);
     }
   }, [allPlayers, isOpen]);
 
   // Captain randomizer function
   const randomizeCaptains = () => {
-    if (availablePlayers.length < 2) {
+    if (sortedPlayers.length < 2) {
       toast({
         title: "Not enough players",
         description: "You need at least 2 players to randomize captains.",
@@ -51,12 +54,12 @@ export default function CreateSeriesModal({ isOpen, onClose }: CreateSeriesModal
     }
 
     // Reset any existing selections
-    setAvailablePlayers([...allPlayers]);
+    setAvailablePlayers([...sortedPlayers]);
     setCaptain1(null);
     setCaptain2(null);
 
     // Randomly select two different players
-    const shuffled = [...allPlayers].sort(() => Math.random() - 0.5);
+    const shuffled = [...sortedPlayers].sort(() => Math.random() - 0.5);
     const newCaptain1 = shuffled[0];
     const newCaptain2 = shuffled[1];
 
@@ -133,6 +136,9 @@ export default function CreateSeriesModal({ isOpen, onClose }: CreateSeriesModal
 
   const createSeriesMutation = useMutation({
     mutationFn: async () => {
+      // Generate series name from captains
+      const seriesName = `${captain1?.name} vs ${captain2?.name}`;
+      
       // Create series first
       const seriesData: InsertSeries = {
         name: seriesName,
@@ -197,13 +203,12 @@ export default function CreateSeriesModal({ isOpen, onClose }: CreateSeriesModal
 
   const resetForm = () => {
     setCurrentStep(1);
-    setSeriesName("");
     setTargetWins(13);
     setCaptain1(null);
     setCaptain2(null);
     setTeam1Players([]);
     setTeam2Players([]);
-    setAvailablePlayers([...allPlayers]);
+    setAvailablePlayers([...sortedPlayers]);
   };
 
   const handleClose = () => {
@@ -213,7 +218,7 @@ export default function CreateSeriesModal({ isOpen, onClose }: CreateSeriesModal
 
   const handleNextStep = () => {
     if (currentStep === 1) {
-      if (!seriesName || !captain1 || !captain2) return;
+      if (!captain1 || !captain2) return;
       initializeTeamSetup();
     }
     setCurrentStep(prev => prev + 1);
@@ -230,15 +235,6 @@ export default function CreateSeriesModal({ isOpen, onClose }: CreateSeriesModal
   const renderStep1 = () => (
     <div className="space-y-6">
       <div className="space-y-4">
-        <div>
-          <Label htmlFor="seriesName">Series Name</Label>
-          <Input
-            id="seriesName"
-            value={seriesName}
-            onChange={(e) => setSeriesName(e.target.value)}
-            placeholder="Enter series name"
-          />
-        </div>
         <div>
           <Label htmlFor="targetWins">Target Wins</Label>
           <Input
@@ -272,30 +268,26 @@ export default function CreateSeriesModal({ isOpen, onClose }: CreateSeriesModal
               <Crown className="w-4 h-4" />
               Captain 1
             </Label>
-            {captain1 ? (
-              <Card className="mt-2 border-purple-200 bg-purple-50">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Crown className="w-4 h-4 text-purple-600" />
-                      <span className="font-medium">{captain1.name}</span>
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        setAvailablePlayers(prev => [...prev, captain1]);
-                        setCaptain1(null);
-                      }}
-                    >
-                      Change
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="mt-2 text-sm text-gray-500">Click on a player below or use randomizer</div>
-            )}
+            <Select
+              value={captain1?.id.toString() || ""}
+              onValueChange={(value) => {
+                const player = sortedPlayers.find(p => p.id.toString() === value);
+                if (player) selectCaptain(player, 1);
+              }}
+            >
+              <SelectTrigger className="mt-2">
+                <SelectValue placeholder="Select Captain 1" />
+              </SelectTrigger>
+              <SelectContent>
+                {sortedPlayers
+                  .filter(p => p.id !== captain2?.id)
+                  .map(player => (
+                    <SelectItem key={player.id} value={player.id.toString()}>
+                      {player.name}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div>
@@ -303,65 +295,26 @@ export default function CreateSeriesModal({ isOpen, onClose }: CreateSeriesModal
               <Crown className="w-4 h-4" />
               Captain 2
             </Label>
-            {captain2 ? (
-              <Card className="mt-2 border-green-200 bg-green-50">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Crown className="w-4 h-4 text-green-600" />
-                      <span className="font-medium">{captain2.name}</span>
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        setAvailablePlayers(prev => [...prev, captain2]);
-                        setCaptain2(null);
-                      }}
-                    >
-                      Change
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="mt-2 text-sm text-gray-500">Click on a player below or use randomizer</div>
-            )}
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          <Label className="text-sm font-medium text-gray-700">Available Players</Label>
-          <div className="grid grid-cols-3 gap-2 max-h-40 overflow-y-auto">
-            {availablePlayers.map(player => (
-              <Card key={player.id} className="cursor-pointer hover:bg-gray-50">
-                <CardContent className="p-3">
-                  <div className="text-center">
-                    <div className="text-sm font-medium">{player.name}</div>
-                    <div className="flex gap-1 mt-2 justify-center">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-6 px-2 text-xs text-purple-600 hover:bg-purple-50"
-                        onClick={() => selectCaptain(player, 1)}
-                        disabled={captain2?.id === player.id}
-                      >
-                        Cap 1
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-6 px-2 text-xs text-green-600 hover:bg-green-50"
-                        onClick={() => selectCaptain(player, 2)}
-                        disabled={captain1?.id === player.id}
-                      >
-                        Cap 2
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+            <Select
+              value={captain2?.id.toString() || ""}
+              onValueChange={(value) => {
+                const player = sortedPlayers.find(p => p.id.toString() === value);
+                if (player) selectCaptain(player, 2);
+              }}
+            >
+              <SelectTrigger className="mt-2">
+                <SelectValue placeholder="Select Captain 2" />
+              </SelectTrigger>
+              <SelectContent>
+                {sortedPlayers
+                  .filter(p => p.id !== captain1?.id)
+                  .map(player => (
+                    <SelectItem key={player.id} value={player.id.toString()}>
+                      {player.name}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </div>
@@ -415,7 +368,7 @@ export default function CreateSeriesModal({ isOpen, onClose }: CreateSeriesModal
             Available Players
           </Label>
           <div className="space-y-2 min-h-[250px] p-3 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
-            {availablePlayers.map(player => (
+            {availablePlayers.sort((a, b) => a.name.localeCompare(b.name)).map(player => (
               <Card key={player.id} className="bg-white cursor-pointer hover:bg-gray-50">
                 <CardContent className="p-2">
                   <div className="flex items-center justify-between">
@@ -513,7 +466,7 @@ export default function CreateSeriesModal({ isOpen, onClose }: CreateSeriesModal
               {currentStep < 2 ? (
                 <Button
                   onClick={handleNextStep}
-                  disabled={!seriesName || !captain1 || !captain2}
+                  disabled={!captain1 || !captain2}
                 >
                   Next
                   <ArrowRight className="w-4 h-4 ml-2" />

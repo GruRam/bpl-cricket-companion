@@ -179,6 +179,8 @@ Changelog:
     - Clear runs description below each completed ball
     - Tennis ball texture lines for visual appeal
     - Color legend for easy understanding
+    - Dynamic display showing only balls actually bowled (no pre-populated empty slots)
     - All balls displayed chronologically in order bowled (including extras mixed with regular balls)
     - Extra balls (WD/NB) shown in orange with clear labels like "WD" or "NB+1"
+    - Next ball indicator appears only when over is incomplete (based on valid ball count)
 ```

@@ -872,8 +872,8 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
                   );
                 })}
                 
-                {/* Show next ball indicator if over is not complete */}
-                {overBalls.length < 6 && (
+                {/* Show next ball indicator if over is not complete (count valid balls only) */}
+                {overBalls.filter(b => !b.entry.isWide && !b.entry.isNoBall).length < 6 && (
                   <div className="flex flex-col items-center gap-1">
                     <div className="w-10 h-10 rounded-full flex items-center justify-center text-lg relative bg-yellow-300 border-3 border-yellow-500 animate-pulse">
                       {/* Tennis ball texture lines */}

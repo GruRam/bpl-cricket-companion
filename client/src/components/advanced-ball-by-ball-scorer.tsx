@@ -807,86 +807,109 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
             <div>
               <div className="text-xs text-muted-foreground mb-2">Over Progress</div>
               <div className="flex gap-3 flex-wrap">
-                {/* Show all balls in chronological order */}
-                {overBalls.map((ball, index) => {
-                  const isExtra = ball.entry.isWide || ball.entry.isNoBall;
-                  const displayText = isExtra 
-                    ? ball.entry.isWide 
-                      ? 'WD' 
-                      : ball.entry.isNoBall 
-                        ? `NB${ball.entry.runs > 0 ? `+${ball.entry.runs}` : ''}`
-                        : 'E'
-                    : ball.entry.isWicket 
-                      ? 'W' 
-                      : ball.entry.runs.toString();
+                {(() => {
+                  // Create a display array starting with all balls chronologically
+                  const displayBalls = [...overBalls];
                   
-                  return (
-                    <div key={index} className="flex flex-col items-center gap-1">
-                      {/* Tennis Ball Icon */}
-                      <div
-                        className={`w-10 h-10 rounded-full flex items-center justify-center text-lg relative ${
-                          isExtra
-                            ? 'bg-orange-500 text-white shadow-lg' // Extras - Orange
-                            : ball.entry.isWicket
-                            ? 'bg-red-500 text-white shadow-lg' // Wicket - Red
-                            : ball.entry.runs === 4 || ball.entry.runs === 6
-                            ? 'bg-green-500 text-white shadow-lg' // Boundary - Green
-                            : ball.entry.runs === 0
-                            ? 'bg-gray-500 text-white shadow-lg' // Dot ball - Gray
-                            : 'bg-blue-500 text-white shadow-lg' // Regular runs - Blue
-                        }`}
-                      >
-                        {/* Tennis ball texture lines */}
-                        <div className="absolute inset-0 rounded-full">
-                          <div className="w-full h-0.5 bg-white/30 absolute top-1/2 transform -translate-y-0.5 rotate-12"></div>
-                          <div className="w-full h-0.5 bg-white/30 absolute top-1/2 transform -translate-y-0.5 -rotate-12"></div>
+                  // Count valid balls (non-extras)
+                  const validBallsCount = overBalls.filter(b => !b.entry.isWide && !b.entry.isNoBall).length;
+                  
+                  // Add empty slots to make total legitimate ball positions = 6
+                  const emptySlots = Math.max(0, 6 - validBallsCount);
+                  for (let i = 0; i < emptySlots; i++) {
+                    displayBalls.push(null); // null represents empty slot
+                  }
+                  
+                  return displayBalls.map((ball, index) => {
+                    if (!ball) {
+                      // Empty slot
+                      const isNextBall = index === overBalls.length; // First empty slot is next ball
+                      return (
+                        <div key={`empty-${index}`} className="flex flex-col items-center gap-1">
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg relative ${
+                            isNextBall 
+                              ? 'bg-yellow-300 border-3 border-yellow-500 animate-pulse'
+                              : 'bg-gray-200 border-2 border-gray-300'
+                          }`}>
+                            {/* Tennis ball texture lines */}
+                            <div className="absolute inset-0 rounded-full">
+                              <div className="w-full h-0.5 bg-white/30 absolute top-1/2 transform -translate-y-0.5 rotate-12"></div>
+                              <div className="w-full h-0.5 bg-white/30 absolute top-1/2 transform -translate-y-0.5 -rotate-12"></div>
+                            </div>
+                          </div>
+                          {isNextBall && (
+                            <div className="text-xs font-medium px-1.5 py-0.5 rounded bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300">
+                              Next Ball
+                            </div>
+                          )}
                         </div>
-                        {/* Ball content */}
-                        <span className="relative z-10 font-bold text-xs">
-                          {displayText}
-                        </span>
+                      );
+                    }
+                    
+                    // Filled ball
+                    const isExtra = ball.entry.isWide || ball.entry.isNoBall;
+                    const displayText = isExtra 
+                      ? ball.entry.isWide 
+                        ? 'WD' 
+                        : ball.entry.isNoBall 
+                          ? `NB${ball.entry.runs > 0 ? `+${ball.entry.runs}` : ''}`
+                          : 'E'
+                      : ball.entry.isWicket 
+                        ? 'W' 
+                        : ball.entry.runs.toString();
+                    
+                    return (
+                      <div key={index} className="flex flex-col items-center gap-1">
+                        {/* Tennis Ball Icon */}
+                        <div
+                          className={`w-10 h-10 rounded-full flex items-center justify-center text-lg relative ${
+                            isExtra
+                              ? 'bg-orange-500 text-white shadow-lg' // Extras - Orange
+                              : ball.entry.isWicket
+                              ? 'bg-red-500 text-white shadow-lg' // Wicket - Red
+                              : ball.entry.runs === 4 || ball.entry.runs === 6
+                              ? 'bg-green-500 text-white shadow-lg' // Boundary - Green
+                              : ball.entry.runs === 0
+                              ? 'bg-gray-500 text-white shadow-lg' // Dot ball - Gray
+                              : 'bg-blue-500 text-white shadow-lg' // Regular runs - Blue
+                          }`}
+                        >
+                          {/* Tennis ball texture lines */}
+                          <div className="absolute inset-0 rounded-full">
+                            <div className="w-full h-0.5 bg-white/30 absolute top-1/2 transform -translate-y-0.5 rotate-12"></div>
+                            <div className="w-full h-0.5 bg-white/30 absolute top-1/2 transform -translate-y-0.5 -rotate-12"></div>
+                          </div>
+                          {/* Ball content */}
+                          <span className="relative z-10 font-bold text-xs">
+                            {displayText}
+                          </span>
+                        </div>
+                        
+                        {/* Runs display below ball */}
+                        <div className={`text-xs font-medium px-1.5 py-0.5 rounded ${
+                          isExtra
+                            ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300'
+                            : ball.entry.isWicket
+                            ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+                            : ball.entry.runs === 4 || ball.entry.runs === 6
+                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+                            : ball.entry.runs === 0
+                            ? 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-300'
+                            : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                        }`}>
+                          {isExtra 
+                            ? ball.entry.isWide 
+                              ? 'WIDE' 
+                              : 'NO BALL'
+                            : ball.entry.isWicket 
+                              ? 'WICKET' 
+                              : `${ball.entry.runs} run${ball.entry.runs !== 1 ? 's' : ''}`
+                          }
+                        </div>
                       </div>
-                      
-                      {/* Runs display below ball */}
-                      <div className={`text-xs font-medium px-1.5 py-0.5 rounded ${
-                        isExtra
-                          ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300'
-                          : ball.entry.isWicket
-                          ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
-                          : ball.entry.runs === 4 || ball.entry.runs === 6
-                          ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
-                          : ball.entry.runs === 0
-                          ? 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-300'
-                          : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
-                      }`}>
-                        {isExtra 
-                          ? ball.entry.isWide 
-                            ? 'WIDE' 
-                            : 'NO BALL'
-                          : ball.entry.isWicket 
-                            ? 'WICKET' 
-                            : `${ball.entry.runs} run${ball.entry.runs !== 1 ? 's' : ''}`
-                        }
-                      </div>
-                    </div>
-                  );
-                })}
-                
-                {/* Show next ball indicator if over is not complete (count valid balls only) */}
-                {overBalls.filter(b => !b.entry.isWide && !b.entry.isNoBall).length < 6 && (
-                  <div className="flex flex-col items-center gap-1">
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center text-lg relative bg-yellow-300 border-3 border-yellow-500 animate-pulse">
-                      {/* Tennis ball texture lines */}
-                      <div className="absolute inset-0 rounded-full">
-                        <div className="w-full h-0.5 bg-white/30 absolute top-1/2 transform -translate-y-0.5 rotate-12"></div>
-                        <div className="w-full h-0.5 bg-white/30 absolute top-1/2 transform -translate-y-0.5 -rotate-12"></div>
-                      </div>
-                    </div>
-                    <div className="text-xs font-medium px-1.5 py-0.5 rounded bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300">
-                      Next Ball
-                    </div>
-                  </div>
-                )}
+                    );
+                  });
+                })()}
               </div>
             </div>
 

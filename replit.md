@@ -179,8 +179,9 @@ Changelog:
     - Clear runs description below each completed ball
     - Tennis ball texture lines for visual appeal
     - Color legend for easy understanding
-    - Dynamic display showing only balls actually bowled (no pre-populated empty slots)
-    - All balls displayed chronologically in order bowled (including extras mixed with regular balls)
+    - Always shows 6 legitimate ball slots by default (empty gray balls)
+    - Fills balls chronologically as bowled, including extras mixed with regular balls
+    - When extras occur, shows them chronologically but maintains 6 legitimate ball positions
     - Extra balls (WD/NB) shown in orange with clear labels like "WD" or "NB+1"
-    - Next ball indicator appears only when over is incomplete (based on valid ball count)
+    - Next legitimate ball slot pulses yellow to indicate which ball is next
 ```

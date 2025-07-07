@@ -70,8 +70,8 @@ export default function Home() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-semibold text-gray-800">Set up Series</h3>
-                <p className="text-gray-600">Create new series with teams</p>
+                <h3 className="text-lg font-semibold text-foreground">Set up Series</h3>
+                <p className="text-muted-foreground">Create new series with teams</p>
               </div>
               <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                 <Users className="w-6 h-6 text-blue-600" />
@@ -85,8 +85,8 @@ export default function Home() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-800">Start New Match</h3>
-                  <p className="text-gray-600">Begin scoring a match</p>
+                  <h3 className="text-lg font-semibold text-foreground">Start New Match</h3>
+                  <p className="text-muted-foreground">Begin scoring a match</p>
                 </div>
                 <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
                   <Play className="w-6 h-6 text-green-600" />
@@ -101,8 +101,8 @@ export default function Home() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-800">View Stats</h3>
-                  <p className="text-gray-600">Check performance statistics</p>
+                  <h3 className="text-lg font-semibold text-foreground">View Stats</h3>
+                  <p className="text-muted-foreground">Check performance statistics</p>
                 </div>
                 <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
                   <BarChart3 className="w-6 h-6 text-purple-600" />
@@ -119,14 +119,14 @@ export default function Home() {
       {seriesProgress && (
         <Card className="mb-8">
           <CardContent className="p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Series Progress</h3>
+            <h3 className="text-lg font-semibold text-foreground mb-4">Series Progress</h3>
             <div className="flex items-center justify-between mb-4">
               <div className="text-center">
-                <div className="text-2xl font-bold text-purple-600">{seriesProgress.team1Wins}</div>
-                <div className="text-sm text-gray-600">{seriesProgress.team1.name}</div>
+                <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">{seriesProgress.team1Wins}</div>
+                <div className="text-sm text-muted-foreground">{seriesProgress.team1.name}</div>
               </div>
               <div className="flex-1 mx-8">
-                <div className="bg-gray-200 rounded-full h-3">
+                <div className="bg-muted rounded-full h-3">
                   <div 
                     className="bg-gradient-to-r from-purple-400 to-green-400 h-3 rounded-full transition-all duration-500"
                     style={{ 
@@ -134,13 +134,13 @@ export default function Home() {
                     }}
                   />
                 </div>
-                <div className="text-center text-sm text-gray-600 mt-2">
+                <div className="text-center text-sm text-muted-foreground mt-2">
                   First to {activeSeries.targetWins || 13} wins
                 </div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">{seriesProgress.team2Wins}</div>
-                <div className="text-sm text-gray-600">{seriesProgress.team2.name}</div>
+                <div className="text-2xl font-bold text-green-600 dark:text-green-400">{seriesProgress.team2Wins}</div>
+                <div className="text-sm text-muted-foreground">{seriesProgress.team2.name}</div>
               </div>
             </div>
           </CardContent>
@@ -150,25 +150,25 @@ export default function Home() {
       {/* Recent Matches */}
       <Card>
         <CardContent className="p-6">
-          <h3 className="text-xl font-semibold text-gray-800 mb-4">Recent Matches</h3>
+          <h3 className="text-xl font-semibold text-foreground mb-4">Recent Matches</h3>
           {recentMatches && recentMatches.length > 0 ? (
             <div className="space-y-4">
               {recentMatches.map((match) => (
-                <div key={match.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div key={match.id} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
                   <div className="flex items-center space-x-4">
                     <div className={`w-2 h-2 rounded-full ${match.isCompleted ? 'bg-green-500' : 'bg-yellow-500'}`} />
                     <div>
-                      <div className="font-medium text-gray-800">Match #{match.id}</div>
-                      <div className="text-sm text-gray-600">
+                      <div className="font-medium text-foreground">Match #{match.id}</div>
+                      <div className="text-sm text-muted-foreground">
                         {new Date(match.matchDate).toLocaleDateString()}
                       </div>
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="font-semibold text-gray-800">
+                    <div className="font-semibold text-foreground">
                       {match.isCompleted ? 'Completed' : 'In Progress'}
                     </div>
-                    <div className="text-sm text-gray-600">
+                    <div className="text-sm text-muted-foreground">
                       {match.winningTeamId ? `Winner: Team ${match.winningTeamId}` : 'Ongoing'}
                     </div>
                   </div>
@@ -177,8 +177,8 @@ export default function Home() {
             </div>
           ) : (
             <div className="text-center py-8">
-              <TrendingUp className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600">No matches played yet</p>
+              <TrendingUp className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">No matches played yet</p>
             </div>
           )}
         </CardContent>

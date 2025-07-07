@@ -69,7 +69,7 @@ export default function Stats() {
           {/* Top Batsmen */}
           <Card>
             <CardContent className="p-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+              <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center">
                 <Target className="w-5 h-5 mr-2 text-green-600" />
                 Top Batsmen
               </h3>
@@ -82,20 +82,20 @@ export default function Stats() {
                           {getInitials(player.name)}
                         </div>
                         <div>
-                          <div className="font-medium text-gray-800">{player.name}</div>
-                          <div className="text-sm text-gray-600">Avg: 0.0 | SR: 0.0</div>
+                          <div className="font-medium text-foreground">{player.name}</div>
+                          <div className="text-sm text-muted-foreground">Avg: 0.0 | SR: 0.0</div>
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="font-semibold text-gray-800">0</div>
-                        <div className="text-sm text-gray-600">runs</div>
+                        <div className="font-semibold text-foreground">0</div>
+                        <div className="text-sm text-muted-foreground">runs</div>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <Award className="w-12 h-12 mx-auto mb-2 text-gray-400" />
+                <div className="text-center py-8 text-muted-foreground">
+                  <Award className="w-12 h-12 mx-auto mb-2 text-muted-foreground" />
                   <p>No batting stats available</p>
                 </div>
               )}
@@ -105,7 +105,7 @@ export default function Stats() {
           {/* Top Bowlers */}
           <Card>
             <CardContent className="p-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+              <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center">
                 <TrendingUp className="w-5 h-5 mr-2 text-red-600" />
                 Top Bowlers
               </h3>
@@ -118,20 +118,20 @@ export default function Stats() {
                           {getInitials(player.name)}
                         </div>
                         <div>
-                          <div className="font-medium text-gray-800">{player.name}</div>
-                          <div className="text-sm text-gray-600">Avg: 0.0 | Econ: 0.0</div>
+                          <div className="font-medium text-foreground">{player.name}</div>
+                          <div className="text-sm text-muted-foreground">Avg: 0.0 | Econ: 0.0</div>
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="font-semibold text-gray-800">0</div>
-                        <div className="text-sm text-gray-600">wickets</div>
+                        <div className="font-semibold text-foreground">0</div>
+                        <div className="text-sm text-muted-foreground">wickets</div>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <Award className="w-12 h-12 mx-auto mb-2 text-gray-400" />
+                <div className="text-center py-8 text-muted-foreground">
+                  <Award className="w-12 h-12 mx-auto mb-2 text-muted-foreground" />
                   <p>No bowling stats available</p>
                 </div>
               )}
@@ -144,7 +144,7 @@ export default function Stats() {
       {seriesProgress && activeSeries && (
         <Card>
           <CardContent className="p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Series Progress</h3>
+            <h3 className="text-lg font-semibold text-foreground mb-4">Series Progress</h3>
             <div className="flex items-center justify-between mb-4">
               <div className="text-center">
                 <div className="text-2xl font-bold text-purple-600">{seriesProgress.team1Wins}</div>

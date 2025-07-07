@@ -86,7 +86,7 @@ export default function Players() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">Player Roster</h2>
+        <h2 className="text-2xl font-bold text-foreground">Player Roster</h2>
         <Button
           onClick={() => setShowAddModal(true)}
           className="bg-purple-600 hover:bg-purple-700 text-white"
@@ -126,7 +126,7 @@ export default function Players() {
                           </Button>
                         </div>
                       ) : (
-                        <h3 className="font-semibold text-gray-800">{player.name}</h3>
+                        <h3 className="font-semibold text-foreground">{player.name}</h3>
                       )}
                     </div>
                   </div>
@@ -135,7 +135,7 @@ export default function Players() {
                       size="sm"
                       variant="ghost"
                       onClick={() => startEdit(player)}
-                      className="text-gray-500 hover:text-gray-700"
+                      className="text-muted-foreground hover:text-foreground"
                     >
                       <Edit2 className="w-4 h-4" />
                     </Button>
@@ -144,7 +144,7 @@ export default function Players() {
                 
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <div className="text-gray-600">Matches</div>
+                    <div className="text-muted-foreground">Matches</div>
                     <div className="font-semibold">0</div>
                   </div>
                   <div>

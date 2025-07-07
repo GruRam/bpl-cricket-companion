@@ -151,7 +151,7 @@ Changelog:
   * Updated app name to "BPL Scorer (Buddies Premier League)"
   * Enhanced navigation with app branding and theme toggle
   * Added striker/non-striker swap functionality with rotate button
-  * Updated overs per side options to: 6, 7, 8, 9, 10, 12, 20
+  * Updated overs per side options to: 2, 6, 7, 8, 9, 10, 12, 20 (2 overs added for testing)
   * Run out dismissals now include runs scored (0-4) before wicket
   * Improved ball counting logic for proper cricket rules
   * Fixed all hard-coded text colors across entire app for proper dark mode support

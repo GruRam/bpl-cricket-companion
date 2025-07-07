@@ -190,7 +190,7 @@ export default function MatchSetupModal({ isOpen, onClose, onMatchStart, activeS
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {[6, 7, 8, 9, 10, 12, 20].map(overs => (
+                      {[2, 6, 7, 8, 9, 10, 12, 20].map(overs => (
                         <SelectItem key={overs} value={overs.toString()}>{overs} overs</SelectItem>
                       ))}
                     </SelectContent>

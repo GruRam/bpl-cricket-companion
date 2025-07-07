@@ -803,10 +803,10 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {/* Valid balls row */}
+            {/* Over Progress - Tennis Ball Display */}
             <div>
-              <div className="text-xs text-muted-foreground mb-2">Valid Balls</div>
-              <div className="flex gap-2">
+              <div className="text-xs text-muted-foreground mb-2">Over Progress</div>
+              <div className="flex gap-3">
                 {[1, 2, 3, 4, 5, 6].map((ballNum) => {
                   // Find the last valid ball for this position
                   const ballsForPosition = overBalls.filter(b => {
@@ -816,24 +816,78 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
                   const ball = ballsForPosition[ballsForPosition.length - 1]; // Get the last ball for this position
                   
                   return (
-                    <div
-                      key={ballNum}
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                        ball
-                          ? ball.entry.isWicket
-                            ? 'bg-red-500 text-white'
+                    <div key={ballNum} className="flex flex-col items-center gap-1">
+                      {/* Tennis Ball Icon */}
+                      <div
+                        className={`w-10 h-10 rounded-full flex items-center justify-center text-lg relative ${
+                          ball
+                            ? ball.entry.isWicket
+                              ? 'bg-red-500 text-white shadow-lg' // Wicket - Red
+                              : ball.entry.runs === 4 || ball.entry.runs === 6
+                              ? 'bg-green-500 text-white shadow-lg' // Boundary - Green
+                              : ball.entry.runs === 0
+                              ? 'bg-gray-500 text-white shadow-lg' // Dot ball - Gray
+                              : 'bg-blue-500 text-white shadow-lg' // Regular runs - Blue
+                            : ballNum === currentBallInOver
+                            ? 'bg-yellow-300 border-3 border-yellow-500 animate-pulse' // Next ball - Yellow/Active
+                            : 'bg-gray-200 border-2 border-gray-300' // Unplayed - Light gray
+                        }`}
+                      >
+                        {/* Tennis ball texture lines */}
+                        <div className="absolute inset-0 rounded-full">
+                          <div className="w-full h-0.5 bg-white/30 absolute top-1/2 transform -translate-y-0.5 rotate-12"></div>
+                          <div className="w-full h-0.5 bg-white/30 absolute top-1/2 transform -translate-y-0.5 -rotate-12"></div>
+                        </div>
+                        {/* Ball content */}
+                        <span className="relative z-10 font-bold">
+                          {ball ? (ball.entry.isWicket ? 'W' : ball.entry.runs) : ''}
+                        </span>
+                      </div>
+                      
+                      {/* Runs display below ball */}
+                      {ball && (
+                        <div className={`text-xs font-medium px-1.5 py-0.5 rounded ${
+                          ball.entry.isWicket
+                            ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
                             : ball.entry.runs === 4 || ball.entry.runs === 6
-                            ? 'bg-green-500 text-white'
-                            : 'bg-blue-500 text-white'
-                          : ballNum === currentBallInOver
-                          ? 'bg-blue-100 border-2 border-blue-500'
-                          : 'bg-gray-200'
-                      }`}
-                    >
-                      {ball ? (ball.entry.isWicket ? 'W' : ball.entry.runs) : ballNum}
+                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+                            : ball.entry.runs === 0
+                            ? 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-300'
+                            : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                        }`}>
+                          {ball.entry.isWicket ? 'WICKET' : `${ball.entry.runs} run${ball.entry.runs !== 1 ? 's' : ''}`}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
+              </div>
+            </div>
+
+            {/* Color Legend */}
+            <div>
+              <div className="text-xs text-muted-foreground mb-2">Legend</div>
+              <div className="flex flex-wrap gap-3 text-xs">
+                <div className="flex items-center gap-1">
+                  <div className="w-4 h-4 rounded-full bg-yellow-300 border border-yellow-500"></div>
+                  <span>Next Ball</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-4 h-4 rounded-full bg-blue-500"></div>
+                  <span>Runs</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-4 h-4 rounded-full bg-green-500"></div>
+                  <span>Boundary</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-4 h-4 rounded-full bg-gray-500"></div>
+                  <span>Dot Ball</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-4 h-4 rounded-full bg-red-500"></div>
+                  <span>Wicket</span>
+                </div>
               </div>
             </div>
             

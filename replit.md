@@ -173,4 +173,10 @@ Changelog:
     - Remaining batter stays on strike regardless of runs scored
     - Visual indicator shows when single batting mode is active
     - Batsman rotation disabled in single batting scenarios
+  * Enhanced over progress visualization:
+    - Replaced confusing number display with tennis ball icons
+    - Color-coded balls: Yellow (next), Blue (runs), Green (boundary), Gray (dot), Red (wicket)
+    - Clear runs description below each completed ball
+    - Tennis ball texture lines for visual appeal
+    - Color legend for easy understanding
 ```

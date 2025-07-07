@@ -104,11 +104,11 @@
 }
 
 .tab-button.active {
-  @apply bg-white text-purple-700 border-purple-200 shadow-md;
+  @apply bg-primary text-primary-foreground border-primary border-opacity-20 shadow-md;
 }
 
 .tab-button:not(.active) {
-  @apply bg-transparent text-gray-600 hover:bg-white/50 hover:text-gray-800;
+  @apply bg-transparent text-muted-foreground hover:bg-accent hover:text-accent-foreground;
 }
 
 .ball-entry:hover {

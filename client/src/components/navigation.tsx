@@ -17,12 +17,14 @@ export default function Navigation() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center">
-              <span className="text-white font-bold text-sm">🏏</span>
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg">
+              <span className="text-white font-bold text-lg">🏏</span>
             </div>
             <div>
-              <h1 className="text-xl font-bold text-foreground">BPL Scorer</h1>
-              <p className="text-xs text-muted-foreground">Buddies Premier League</p>
+              <h1 className="text-2xl font-bold text-foreground bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
+                BPL Scorer
+              </h1>
+              <p className="text-xs text-muted-foreground font-medium">Buddies Premier League</p>
             </div>
           </div>
           <div className="flex items-center space-x-2">

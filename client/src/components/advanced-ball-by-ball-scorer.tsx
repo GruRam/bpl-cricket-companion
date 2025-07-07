@@ -944,18 +944,6 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
               </div>
             </div>
             
-            {/* Live Commentary */}
-            <div>
-              <div className="text-xs text-muted-foreground mb-2">Live Commentary</div>
-              <div className="max-h-32 overflow-y-auto space-y-1">
-                {overBalls.map((ball, index) => (
-                  <div key={index} className="text-sm">
-                    <span className="font-bold">{ball.ballNumber}:</span> {ball.commentary}
-                  </div>
-                ))}
-              </div>
-            </div>
-            
             <div className="text-sm text-muted-foreground">
               Ball {currentBallInOver} of 6 | Over {currentOver}
             </div>

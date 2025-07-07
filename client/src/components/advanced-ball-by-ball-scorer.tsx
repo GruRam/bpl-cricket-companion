@@ -806,7 +806,8 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
             {/* Over Progress - Tennis Ball Display */}
             <div>
               <div className="text-xs text-muted-foreground mb-2">Over Progress</div>
-              <div className="flex gap-3">
+              <div className="flex gap-3 flex-wrap">
+                {/* Valid balls (1-6) */}
                 {[1, 2, 3, 4, 5, 6].map((ballNum) => {
                   // Find the last valid ball for this position
                   const ballsForPosition = overBalls.filter(b => {
@@ -861,6 +862,34 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
                     </div>
                   );
                 })}
+                
+                {/* Extra balls (Wides/No-balls) */}
+                {overBalls.filter(b => {
+                  const ballPos = parseFloat(b.ballNumber.toString());
+                  return ballPos < 1; // Extras have ball numbers like 0.1, 0.2, etc.
+                }).map((extraBall, index) => {
+                  return (
+                    <div key={`extra-${index}`} className="flex flex-col items-center gap-1">
+                      {/* Tennis Ball Icon for Extra */}
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center text-lg relative bg-orange-500 text-white shadow-lg">
+                        {/* Tennis ball texture lines */}
+                        <div className="absolute inset-0 rounded-full">
+                          <div className="w-full h-0.5 bg-white/30 absolute top-1/2 transform -translate-y-0.5 rotate-12"></div>
+                          <div className="w-full h-0.5 bg-white/30 absolute top-1/2 transform -translate-y-0.5 -rotate-12"></div>
+                        </div>
+                        {/* Extra ball content */}
+                        <span className="relative z-10 font-bold text-xs">
+                          {extraBall.entry.isWide ? 'WD' : extraBall.entry.isNoBall ? 'NB' : 'E'}
+                        </span>
+                      </div>
+                      
+                      {/* Runs display below extra ball */}
+                      <div className="text-xs font-medium px-1.5 py-0.5 rounded bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300">
+                        {extraBall.entry.isWide ? 'WIDE' : extraBall.entry.isNoBall ? 'NO BALL' : 'EXTRA'}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
@@ -887,6 +916,10 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
                 <div className="flex items-center gap-1">
                   <div className="w-4 h-4 rounded-full bg-red-500"></div>
                   <span>Wicket</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-4 h-4 rounded-full bg-orange-500"></div>
+                  <span>Extra (WD/NB)</span>
                 </div>
               </div>
             </div>

@@ -175,8 +175,9 @@ Changelog:
     - Batsman rotation disabled in single batting scenarios
   * Enhanced over progress visualization:
     - Replaced confusing number display with tennis ball icons
-    - Color-coded balls: Yellow (next), Blue (runs), Green (boundary), Gray (dot), Red (wicket)
+    - Color-coded balls: Yellow (next), Blue (runs), Green (boundary), Gray (dot), Red (wicket), Orange (extras)
     - Clear runs description below each completed ball
     - Tennis ball texture lines for visual appeal
     - Color legend for easy understanding
+    - Extra balls (WD/NB) displayed separately with orange color and appropriate labels
 ```

@@ -21,10 +21,10 @@ export default function Navigation() {
               <span className="text-white font-bold text-lg">🏏</span>
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-foreground bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
+              <h1 className="text-lg font-semibold text-foreground">
                 BPL Scorer
               </h1>
-              <p className="text-xs text-muted-foreground font-medium">Buddies Premier League</p>
+              <p className="text-xs text-muted-foreground">Buddies Premier League</p>
             </div>
           </div>
           <div className="flex items-center space-x-2">

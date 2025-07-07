@@ -653,13 +653,21 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
       {(needsBowlerChange || needsBatsmanChange) && (
         <Card className="border-amber-200 bg-amber-50 dark:bg-amber-900/20">
           <CardContent className="pt-6">
-            <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300">
-              <AlertCircle className="h-5 w-5" />
-              <span className="font-medium">
-                {needsBowlerChange && "Bowler change required after over completion"}
-                {needsBatsmanChange && "New batter selection required after wicket"}
-                {needsBowlerChange && needsBatsmanChange && "Bowler and batter changes required"}
-              </span>
+            <div className="flex items-start gap-2 text-amber-700 dark:text-amber-300">
+              <AlertCircle className="h-5 w-5 mt-0.5 flex-shrink-0" />
+              <div className="font-medium">
+                {needsBowlerChange && needsBatsmanChange ? (
+                  <div className="space-y-1">
+                    <div>Required actions:</div>
+                    <div className="text-sm">• Change bowler (over completed)</div>
+                    <div className="text-sm">• Select new batter (after wicket)</div>
+                  </div>
+                ) : needsBowlerChange ? (
+                  "Bowler change required after over completion"
+                ) : (
+                  "New batter selection required after wicket"
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>

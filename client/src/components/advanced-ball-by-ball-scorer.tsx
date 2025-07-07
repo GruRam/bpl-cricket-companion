@@ -297,19 +297,17 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
       setDismissedPlayers(prev => [...prev, dismissedPlayerId]);
     }
     
-    // For run outs with runs, create a ball entry with the runs scored
-    if (wicketDetails.dismissalType === "Run Out" && wicketDetails.runsScored !== undefined) {
-      const entry: BallEntry = {
-        runs: wicketDetails.runsScored,
-        isWide: false,
-        isNoBall: false,
-        isWicket: true,
-        extras: 0
-      };
-      
-      // Process the ball with runs and wicket
-      handleBallEntry(entry);
-    }
+    // Create a ball entry for the wicket
+    const entry: BallEntry = {
+      runs: wicketDetails.runsScored || 0, // Use runs scored if provided (run outs), otherwise 0
+      isWide: false,
+      isNoBall: false,
+      isWicket: true,
+      extras: 0
+    };
+    
+    // Process the ball with wicket
+    handleBallEntry(entry);
     
     if (onWicketDetails) {
       onWicketDetails(wicketDetails);

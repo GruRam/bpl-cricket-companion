@@ -179,5 +179,6 @@ Changelog:
     - Clear runs description below each completed ball
     - Tennis ball texture lines for visual appeal
     - Color legend for easy understanding
-    - Extra balls (WD/NB) displayed separately with orange color and appropriate labels
+    - All balls displayed chronologically in order bowled (including extras mixed with regular balls)
+    - Extra balls (WD/NB) shown in orange with clear labels like "WD" or "NB+1"
 ```

@@ -184,4 +184,13 @@ Changelog:
     - When extras occur, shows them chronologically but maintains 6 legitimate ball positions
     - Extra balls (WD/NB) shown in orange with clear labels like "WD" or "NB+1"
     - Next legitimate ball slot pulses yellow to indicate which ball is next
+  * Implemented consistent pastel color scheme across all ball entry buttons:
+    - Dot balls (0): Soft gray matching legend
+    - Regular runs (1,2,3,5): Soft blue matching legend  
+    - Boundaries (4,6): Soft green matching legend
+    - Wickets (W): Soft red matching legend
+    - Extras (WD/NB): Soft orange matching legend
+    - All button colors align perfectly with tennis ball color scheme in over progress display
+    - No Ball and Wide Ball buttons positioned together as both are extras
+    - Unified grid layout with consistent button styling throughout interface
 ```

@@ -402,9 +402,9 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
     }
   };
 
-  // Quick entry buttons with pastel color scheme
+  // Quick entry buttons with pastel color scheme matching the legend
   const quickEntryButtons = [
-    { label: "0", entry: { runs: 0, isWide: false, isNoBall: false, isWicket: false, extras: 0 }, color: "bg-slate-300 hover:bg-slate-400 text-slate-800" },
+    { label: "0", entry: { runs: 0, isWide: false, isNoBall: false, isWicket: false, extras: 0 }, color: "bg-gray-300 hover:bg-gray-400 text-gray-800" },
     { label: "1", entry: { runs: 1, isWide: false, isNoBall: false, isWicket: false, extras: 0 }, color: "bg-blue-300 hover:bg-blue-400 text-blue-800" },
     { label: "2", entry: { runs: 2, isWide: false, isNoBall: false, isWicket: false, extras: 0 }, color: "bg-blue-300 hover:bg-blue-400 text-blue-800" },
     { label: "3", entry: { runs: 3, isWide: false, isNoBall: false, isWicket: false, extras: 0 }, color: "bg-blue-300 hover:bg-blue-400 text-blue-800" },
@@ -413,14 +413,8 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
     { label: "6", entry: { runs: 6, isWide: false, isNoBall: false, isWicket: false, extras: 0 }, color: "bg-green-300 hover:bg-green-400 text-green-800" },
     { label: "W", entry: { runs: 0, isWide: false, isNoBall: false, isWicket: true, extras: 0 }, color: "bg-red-300 hover:bg-red-400 text-red-800" },
     { label: "WD", entry: { runs: 0, isWide: true, isNoBall: false, isWicket: false, extras: 1 }, color: "bg-orange-300 hover:bg-orange-400 text-orange-800" },
+    { label: "NB", isSpecial: true, color: "bg-orange-300 hover:bg-orange-400 text-orange-800" },
   ];
-
-  // Special NB button that opens options modal
-  const noBallButton = {
-    label: "NB",
-    color: "bg-amber-300 hover:bg-amber-400 text-amber-800",
-    action: () => setShowNoBallOptions(true)
-  };
 
   // Handle custom entry submission
   const handleCustomEntry = () => {
@@ -718,6 +712,8 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
                       if (needsBowlerChange || needsBatsmanChange) return;
                       if (button.label === "W") {
                         setShowWicketModal(true);
+                      } else if (button.label === "NB") {
+                        setShowNoBallOptions(true);
                       } else {
                         handleBallEntry(button.entry);
                       }
@@ -726,18 +722,6 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
                     {button.label}
                   </Button>
                 ))}
-              </div>
-              <div className="flex gap-2 justify-center">
-                <Button
-                  className={`h-12 px-6 font-bold ${noBallButton.color}`}
-                  disabled={needsBowlerChange || needsBatsmanChange}
-                  onClick={() => {
-                    if (needsBowlerChange || needsBatsmanChange) return;
-                    noBallButton.action();
-                  }}
-                >
-                  {noBallButton.label}
-                </Button>
               </div>
             </div>
           ) : (
@@ -1022,7 +1006,7 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
                 key={runs}
                 className={`h-12 font-bold ${
                   runs === 0 
-                    ? 'bg-slate-300 hover:bg-slate-400 text-slate-800'
+                    ? 'bg-gray-300 hover:bg-gray-400 text-gray-800'
                     : runs === 4 || runs === 6
                     ? 'bg-green-300 hover:bg-green-400 text-green-800'
                     : 'bg-blue-300 hover:bg-blue-400 text-blue-800'

@@ -161,4 +161,15 @@ Changelog:
     - Prevents common players from batting and bowling simultaneously
     - Auto-handles bowler changes when common player switches roles
     - Special logic for when only common player remains for batting
+    - Common players now appear in fielder dropdowns for dismissals
+  * Implemented compulsory game flow controls:
+    - Bowler change mandatory after each over completion
+    - New batter selection mandatory after wickets before proceeding
+    - All ball entry buttons disabled until required changes are made
+    - Clear status indicators showing required actions
+  * Added single batting mode functionality:
+    - Automatically detects when only one batter remains
+    - Remaining batter stays on strike regardless of runs scored
+    - Visual indicator shows when single batting mode is active
+    - Batsman rotation disabled in single batting scenarios
 ```

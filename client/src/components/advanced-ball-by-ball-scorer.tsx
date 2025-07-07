@@ -11,7 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { 
   Plus, Edit, RotateCcw, ArrowRight, Users, Play, Pause, 
   ChevronLeft, ChevronRight, Target, Clock, Trophy, AlertCircle,
-  User, Circle
+  User, Circle, Info
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import type { CurrentMatch, BallEntry } from "@/lib/types";
@@ -58,6 +58,7 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
  // Count of extra balls in current over
   const [needsBowlerChange, setNeedsBowlerChange] = useState(false);
   const [needsBatsmanChange, setNeedsBatsmanChange] = useState(false);
+  const [singleBattingMode, setSingleBattingMode] = useState(false);
   const [pendingWicketDetails, setPendingWicketDetails] = useState<{
     batsmanOut: string;
     dismissalType: string;
@@ -138,9 +139,35 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
     return uniquePlayers;
   };
 
+  // Get available fielders (all bowling team players + common players)
+  const getAvailableFielders = () => {
+    const commonPlayers = match.commonPlayers || [];
+    const allFielders = [...bowlingTeamPlayers, ...commonPlayers];
+    
+    // Remove duplicates and unavailable players
+    return allFielders.filter((player, index, arr) => 
+      arr.findIndex(p => p.id === player.id) === index &&
+      !match.unavailablePlayers?.includes(player.id)
+    );
+  };
+
   // Use the filtered lists
   const battingPlayers = getAvailableBattingPlayers();
   const bowlingPlayers = getAvailableBowlingPlayers();
+  const fielders = getAvailableFielders();
+
+  // Check if we're in single batting mode
+  const checkSingleBattingMode = () => {
+    const availableBatters = getAvailableBattingPlayers();
+    const isSingleBatting = availableBatters.length === 1;
+    setSingleBattingMode(isSingleBatting);
+    return isSingleBatting;
+  };
+
+  // Initialize single batting mode check
+  useEffect(() => {
+    checkSingleBattingMode();
+  }, [dismissedPlayers, battingPlayers]);
 
   // Check if bowler change is needed for common player scenario
   const checkBowlerChangeForCommonPlayer = () => {
@@ -330,9 +357,9 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
       balls: isValidBall ? (currentBallInOver === 6 ? 0 : prev.balls + 1) : prev.balls
     }));
     
-    // Handle striker rotation
-    if (isValidBall && (entry.runs % 2 === 1)) {
-      // Odd runs - swap batsmen
+    // Handle striker rotation - only if not in single batting mode
+    if (isValidBall && (entry.runs % 2 === 1) && !singleBattingMode) {
+      // Odd runs - swap batsmen (only if not single batting)
       const temp = striker;
       setStriker(nonStriker);
       setNonStriker(temp);
@@ -341,14 +368,17 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
     // Handle over completion and ball progression
     if (isValidBall) {
       if (currentBallInOver === 6) {
-        // Over complete - swap batsmen and reset
-        const temp = striker;
-        setStriker(nonStriker);
-        setNonStriker(temp);
+        // Over complete - swap batsmen and reset (only if not single batting)
+        if (!singleBattingMode) {
+          const temp = striker;
+          setStriker(nonStriker);
+          setNonStriker(temp);
+        }
         setCurrentOver(prev => prev + 1);
         setCurrentBallInOver(1);
         setBallPosition(1);
         setOverBalls([]);
+        // Block all ball entry until bowler is changed
         setNeedsBowlerChange(true);
       } else {
         setCurrentBallInOver(prev => prev + 1);
@@ -358,10 +388,14 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
     
     // Handle wicket
     if (entry.isWicket) {
+      // Block all further ball entry until new batter is selected
       setNeedsBatsmanChange(true);
       setShowWicketModal(true);
       // Clear pending wicket details after ball is recorded
       setPendingWicketDetails(null);
+      
+      // Check single batting mode after wicket
+      checkSingleBattingMode();
       
       // Check if bowler needs to change due to common player scenario
       checkBowlerChangeForCommonPlayer();
@@ -570,6 +604,33 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
         </CardContent>
       </Card>
 
+      {/* Status Indicators */}
+      {(needsBowlerChange || needsBatsmanChange) && (
+        <Card className="border-amber-200 bg-amber-50 dark:bg-amber-900/20">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300">
+              <AlertCircle className="h-5 w-5" />
+              <span className="font-medium">
+                {needsBowlerChange && "Bowler change required after over completion"}
+                {needsBatsmanChange && "New batter selection required after wicket"}
+                {needsBowlerChange && needsBatsmanChange && "Bowler and batter changes required"}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {singleBattingMode && (
+        <Card className="border-blue-200 bg-blue-50 dark:bg-blue-900/20">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
+              <Info className="h-5 w-5" />
+              <span className="font-medium">Single Batting Mode: Remaining batter always on strike</span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Scoring Interface */}
       <Card>
         <CardHeader>
@@ -601,7 +662,11 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
                   <Button
                     key={button.label}
                     className={`h-12 text-white font-bold ${button.color}`}
-                    onClick={() => handleBallEntry(button.entry)}
+                    disabled={needsBowlerChange || needsBatsmanChange}
+                    onClick={() => {
+                      if (needsBowlerChange || needsBatsmanChange) return;
+                      handleBallEntry(button.entry);
+                    }}
                   >
                     {button.label}
                   </Button>
@@ -610,7 +675,11 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
               <div className="flex gap-4 justify-center">
                 <Button
                   className="h-12 px-6 text-white font-bold bg-orange-500 hover:bg-orange-600"
-                  onClick={() => setShowNoBallOptions(true)}
+                  disabled={needsBowlerChange || needsBatsmanChange}
+                  onClick={() => {
+                    if (needsBowlerChange || needsBatsmanChange) return;
+                    setShowNoBallOptions(true);
+                  }}
                 >
                   NB
                 </Button>
@@ -666,7 +735,14 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
                   <Label htmlFor="wicket">Wicket</Label>
                 </div>
               </div>
-              <Button onClick={handleCustomEntry} className="w-full">
+              <Button 
+                onClick={() => {
+                  if (needsBowlerChange || needsBatsmanChange) return;
+                  handleCustomEntry();
+                }}
+                disabled={needsBowlerChange || needsBatsmanChange}
+                className="w-full"
+              >
                 Add Ball
               </Button>
             </div>

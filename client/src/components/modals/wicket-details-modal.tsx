@@ -28,11 +28,25 @@ export default function WicketDetailsModal({ isOpen, onClose, match, currentStri
   const [runsScored, setRunsScored] = useState(0);
 
   // Get bowling team players for fielder dropdown
-  const { data: bowlingPlayers = [] } = useQuery<Player[]>({
+  const { data: bowlingTeamPlayers = [] } = useQuery<Player[]>({
     queryKey: ["/api/teams", match.bowlingTeam.id, "players"],
     select: (data: any) => data.map((tp: any) => tp.player).sort((a: Player, b: Player) => a.name.localeCompare(b.name)),
     enabled: isOpen && !!match.bowlingTeam.id,
   });
+
+  // Get available fielders (bowling team + common players)
+  const getAvailableFielders = () => {
+    const commonPlayers = match.commonPlayers || [];
+    const allFielders = [...bowlingTeamPlayers, ...commonPlayers];
+    
+    // Remove duplicates and unavailable players
+    return allFielders.filter((player, index, arr) => 
+      arr.findIndex(p => p.id === player.id) === index &&
+      !match.unavailablePlayers?.includes(player.id)
+    );
+  };
+
+  const fielders = getAvailableFielders();
 
   const dismissalTypes = [
     "Bowled",
@@ -130,7 +144,7 @@ export default function WicketDetailsModal({ isOpen, onClose, match, currentStri
                   <SelectValue placeholder="Select fielder" />
                 </SelectTrigger>
                 <SelectContent>
-                  {bowlingPlayers
+                  {fielders
                     .filter(player => 
                       (currentStriker ? player.id !== currentStriker.id : true) && 
                       (currentNonStriker ? player.id !== currentNonStriker.id : true)

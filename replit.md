@@ -193,4 +193,19 @@ Changelog:
     - All button colors align perfectly with tennis ball color scheme in over progress display
     - No Ball and Wide Ball buttons positioned together as both are extras
     - Unified grid layout with consistent button styling throughout interface
+
+- July 07, 2025. Over limit enforcement and match scorecard:
+  * Added comprehensive match scorecard below live commentary displaying:
+    - Batting statistics: runs, balls, 4s, 6s, strike rate for each batsman
+    - Bowling figures: overs, maidens, runs, wickets, economy, wides, no-balls
+    - Real-time calculation from ball-by-ball data
+    - Current batting status indicators (* for on strike, out/not out status)
+  * Implemented over limit enforcement based on "overs per side" setting:
+    - Match automatically ends when reaching over limit (e.g., 8 overs for 8-over match)
+    - "Innings Complete" alert shown when over limit reached
+    - All ball entry buttons disabled after innings completion
+    - Bowler change alerts only shown if innings not complete
+  * Enhanced match state persistence to include oversPerSide, unavailable players, and common players
+  * Fixed wicket recording flow - now properly creates ball entries for all wicket types
+  * Added professional scorecard layout matching cricket standards
 ```

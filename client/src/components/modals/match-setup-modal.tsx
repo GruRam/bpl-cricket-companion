@@ -153,6 +153,7 @@ export default function MatchSetupModal({ isOpen, onClose, onMatchStart, activeS
       bowler: { id: 0, name: "" },
       unavailablePlayers,
       commonPlayers,
+      oversPerSide,
     };
 
     onMatchStart(match);

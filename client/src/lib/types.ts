@@ -24,6 +24,7 @@ export interface CurrentMatch {
   bowler: { id: number; name: string };
   unavailablePlayers?: number[]; // IDs of players marked as unavailable
   commonPlayers?: { id: number; name: string }[]; // Players who can play for both teams
+  oversPerSide: number; // Total overs allowed per innings
 }
 
 export interface PlayerStat {

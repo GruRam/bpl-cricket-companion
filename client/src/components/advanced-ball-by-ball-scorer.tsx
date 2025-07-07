@@ -11,7 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { 
   Plus, Edit, RotateCcw, ArrowRight, Users, Play, Pause, 
   ChevronLeft, ChevronRight, Target, Clock, Trophy, AlertCircle,
-  User, Circle, Info
+  User, Circle, Info, CheckCircle
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import type { CurrentMatch, BallEntry } from "@/lib/types";
@@ -59,6 +59,7 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
   const [needsBowlerChange, setNeedsBowlerChange] = useState(false);
   const [needsBatsmanChange, setNeedsBatsmanChange] = useState(false);
   const [singleBattingMode, setSingleBattingMode] = useState(false);
+  const [isInningsComplete, setIsInningsComplete] = useState(false);
   const [pendingWicketDetails, setPendingWicketDetails] = useState<{
     batsmanOut: string;
     dismissalType: string;
@@ -213,10 +214,13 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
       allBalls,
       dismissedPlayers,
       ballPosition,
-      runRate
+      runRate,
+      unavailablePlayers: match.unavailablePlayers,
+      commonPlayers: match.commonPlayers,
+      oversPerSide: match.oversPerSide
     };
     localStorage.setItem(`match_${match.id}`, JSON.stringify(matchState));
-  }, [striker, nonStriker, bowler, totalScore, currentOver, currentBallInOver, overBalls, allBalls, dismissedPlayers, ballPosition, runRate, match.id]);
+  }, [striker, nonStriker, bowler, totalScore, currentOver, currentBallInOver, overBalls, allBalls, dismissedPlayers, ballPosition, runRate, match.id, match.unavailablePlayers, match.commonPlayers, match.oversPerSide]);
 
   // Load match state from localStorage on component mount
   useEffect(() => {
@@ -376,8 +380,14 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
         setCurrentBallInOver(1);
         setBallPosition(1);
         setOverBalls([]);
-        // Block all ball entry until bowler is changed
-        setNeedsBowlerChange(true);
+        
+        // Check if innings is complete after this over
+        if (currentOver >= match.oversPerSide) {
+          setIsInningsComplete(true);
+        } else {
+          // Block all ball entry until bowler is changed
+          setNeedsBowlerChange(true);
+        }
       } else {
         setCurrentBallInOver(prev => prev + 1);
       }
@@ -603,8 +613,20 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
         </CardContent>
       </Card>
 
+      {/* Innings Complete Alert */}
+      {isInningsComplete && (
+        <Card className="border-green-200 bg-green-50 dark:bg-green-900/20">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-center gap-2 text-green-700 dark:text-green-300">
+              <CheckCircle className="h-5 w-5" />
+              <span className="font-medium">Innings Complete! {match.oversPerSide} overs bowled</span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Bowler Change Alert - Right after Current Players for visibility */}
-      {needsBowlerChange && (
+      {needsBowlerChange && !isInningsComplete && (
         <Card className="border-red-200 bg-red-50 dark:bg-red-900/20">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
@@ -713,9 +735,9 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
                   <Button
                     key={button.label}
                     className={`h-12 font-bold ${button.color}`}
-                    disabled={needsBowlerChange || needsBatsmanChange}
+                    disabled={needsBowlerChange || needsBatsmanChange || isInningsComplete}
                     onClick={() => {
-                      if (needsBowlerChange || needsBatsmanChange) return;
+                      if (needsBowlerChange || needsBatsmanChange || isInningsComplete) return;
                       if (button.label === "W") {
                         setShowWicketModal(true);
                       } else if (button.label === "NB") {

@@ -64,6 +64,7 @@ export default function Match() {
         bowler: savedMatchState.bowler,
         unavailablePlayers: savedMatchState.unavailablePlayers,
         commonPlayers: savedMatchState.commonPlayers,
+        oversPerSide: savedMatchState.oversPerSide || 8, // Default to 8 if not saved
       };
       setCurrentMatch(resumedMatch);
       setMatchStarted(true);

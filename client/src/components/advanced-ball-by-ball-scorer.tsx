@@ -25,6 +25,7 @@ interface BallByBallScorerProps {
     batsmanOut: string;
     dismissalType: string;
     fielder?: string;
+    runsScored?: number;
   }) => void;
 }
 
@@ -61,6 +62,7 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
     batsmanOut: string;
     dismissalType: string;
     fielder?: string;
+    runsScored?: number;
   } | null>(null);
   const [showWicketModal, setShowWicketModal] = useState(false);
   const [dismissedPlayers, setDismissedPlayers] = useState<number[]>([]);
@@ -184,6 +186,7 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
     batsmanOut: string;
     dismissalType: string;
     fielder?: string;
+    runsScored?: number;
   }) => {
     setPendingWicketDetails(wicketDetails);
     
@@ -191,6 +194,20 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
     const dismissedPlayerId = wicketDetails.batsmanOut === 'striker' ? striker?.id : nonStriker?.id;
     if (dismissedPlayerId) {
       setDismissedPlayers(prev => [...prev, dismissedPlayerId]);
+    }
+    
+    // For run outs with runs, create a ball entry with the runs scored
+    if (wicketDetails.dismissalType === "Run Out" && wicketDetails.runsScored !== undefined) {
+      const entry: BallEntry = {
+        runs: wicketDetails.runsScored,
+        isWide: false,
+        isNoBall: false,
+        isWicket: true,
+        extras: 0
+      };
+      
+      // Process the ball with runs and wicket
+      handleBallEntry(entry);
     }
     
     if (onWicketDetails) {

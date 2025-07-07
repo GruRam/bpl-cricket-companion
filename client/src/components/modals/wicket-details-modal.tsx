@@ -17,6 +17,7 @@ interface WicketDetailsModalProps {
     batsmanOut: string;
     dismissalType: string;
     fielder?: string;
+    runsScored?: number;
   }) => void;
 }
 
@@ -24,6 +25,7 @@ export default function WicketDetailsModal({ isOpen, onClose, match, currentStri
   const [batsmanOut, setBatsmanOut] = useState("");
   const [dismissalType, setDismissalType] = useState("");
   const [fielder, setFielder] = useState("");
+  const [runsScored, setRunsScored] = useState(0);
 
   // Get bowling team players for fielder dropdown
   const { data: bowlingPlayers = [] } = useQuery<Player[]>({
@@ -57,6 +59,7 @@ export default function WicketDetailsModal({ isOpen, onClose, match, currentStri
       batsmanOut,
       dismissalType,
       fielder: fielderRequired ? fielder : undefined,
+      runsScored: dismissalType === "Run Out" ? runsScored : undefined,
     };
 
     console.log("Wicket recorded:", wicketDetails);
@@ -70,6 +73,7 @@ export default function WicketDetailsModal({ isOpen, onClose, match, currentStri
     setBatsmanOut("");
     setDismissalType("");
     setFielder("");
+    setRunsScored(0);
     onClose();
   };
 
@@ -138,6 +142,28 @@ export default function WicketDetailsModal({ isOpen, onClose, match, currentStri
                     ))}
                 </SelectContent>
               </Select>
+            </div>
+          )}
+
+          {dismissalType === "Run Out" && (
+            <div>
+              <Label>Runs Scored Before Run Out</Label>
+              <div className="grid grid-cols-5 gap-2 mt-2">
+                {[0, 1, 2, 3, 4].map((runs) => (
+                  <Button
+                    key={runs}
+                    variant={runsScored === runs ? "default" : "outline"}
+                    onClick={() => setRunsScored(runs)}
+                    className={`text-sm ${
+                      runsScored === runs
+                        ? "bg-purple-600 hover:bg-purple-700"
+                        : ""
+                    }`}
+                  >
+                    {runs}
+                  </Button>
+                ))}
+              </div>
             </div>
           )}
         </div>

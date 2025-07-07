@@ -62,6 +62,8 @@ export default function Match() {
         striker: savedMatchState.striker,
         nonStriker: savedMatchState.nonStriker,
         bowler: savedMatchState.bowler,
+        unavailablePlayers: savedMatchState.unavailablePlayers,
+        commonPlayers: savedMatchState.commonPlayers,
       };
       setCurrentMatch(resumedMatch);
       setMatchStarted(true);

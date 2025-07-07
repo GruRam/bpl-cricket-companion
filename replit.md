@@ -156,4 +156,9 @@ Changelog:
   * Improved ball counting logic for proper cricket rules
   * Fixed all hard-coded text colors across entire app for proper dark mode support
   * Replaced text-gray classes with theme-aware text-foreground and text-muted-foreground
+  * Enhanced common player handling in ball-by-ball scoring:
+    - Common players included in both teams' available player lists
+    - Prevents common players from batting and bowling simultaneously
+    - Auto-handles bowler changes when common player switches roles
+    - Special logic for when only common player remains for batting
 ```

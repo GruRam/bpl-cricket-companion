@@ -81,15 +81,89 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
   });
   
   // Get team players for contextual dropdowns
-  const { data: battingPlayers = [] } = useQuery<Player[]>({
+  const { data: battingTeamPlayers = [] } = useQuery<Player[]>({
     queryKey: ["/api/teams", match.battingTeam.id, "players"],
     select: (data: any) => data.map((tp: any) => tp.player).sort((a: Player, b: Player) => a.name.localeCompare(b.name)),
   });
 
-  const { data: bowlingPlayers = [] } = useQuery<Player[]>({
+  const { data: bowlingTeamPlayers = [] } = useQuery<Player[]>({
     queryKey: ["/api/teams", match.bowlingTeam.id, "players"],
     select: (data: any) => data.map((tp: any) => tp.player).sort((a: Player, b: Player) => a.name.localeCompare(b.name)),
   });
+
+  // Get available players for batting (batting team + common players, minus bowler if common)
+  const getAvailableBattingPlayers = () => {
+    const commonPlayers = match.commonPlayers || [];
+    const allBattingPlayers = [...battingTeamPlayers, ...commonPlayers];
+    
+    // Remove duplicates and unavailable players
+    const uniquePlayers = allBattingPlayers.filter((player, index, arr) => 
+      arr.findIndex(p => p.id === player.id) === index &&
+      !match.unavailablePlayers?.includes(player.id) &&
+      !dismissedPlayers.includes(player.id)
+    );
+
+    // If current bowler is a common player, exclude them from batting
+    const currentBowlerId = bowler?.id;
+    const isCurrentBowlerCommon = commonPlayers.some(cp => cp.id === currentBowlerId);
+    
+    if (isCurrentBowlerCommon) {
+      return uniquePlayers.filter(p => p.id !== currentBowlerId);
+    }
+    
+    return uniquePlayers;
+  };
+
+  // Get available players for bowling (bowling team + common players, minus current batsmen if common)
+  const getAvailableBowlingPlayers = () => {
+    const commonPlayers = match.commonPlayers || [];
+    const allBowlingPlayers = [...bowlingTeamPlayers, ...commonPlayers];
+    
+    // Remove duplicates and unavailable players
+    const uniquePlayers = allBowlingPlayers.filter((player, index, arr) => 
+      arr.findIndex(p => p.id === player.id) === index &&
+      !match.unavailablePlayers?.includes(player.id)
+    );
+
+    // If current batsmen are common players, exclude them from bowling
+    const currentBatsmenIds = [striker?.id, nonStriker?.id].filter(Boolean);
+    const areBatsmenCommon = currentBatsmenIds.some(id => 
+      commonPlayers.some(cp => cp.id === id)
+    );
+    
+    if (areBatsmenCommon) {
+      return uniquePlayers.filter(p => !currentBatsmenIds.includes(p.id));
+    }
+    
+    return uniquePlayers;
+  };
+
+  // Use the filtered lists
+  const battingPlayers = getAvailableBattingPlayers();
+  const bowlingPlayers = getAvailableBowlingPlayers();
+
+  // Check if bowler change is needed for common player scenario
+  const checkBowlerChangeForCommonPlayer = () => {
+    const commonPlayers = match.commonPlayers || [];
+    const currentBowlerId = bowler?.id;
+    
+    // Check if current bowler is a common player
+    const isCurrentBowlerCommon = commonPlayers.some(cp => cp.id === currentBowlerId);
+    
+    if (isCurrentBowlerCommon) {
+      // Check if only common players are left for batting
+      const availableBatters = getAvailableBattingPlayers();
+      const isOnlyCommonPlayerLeft = availableBatters.length === 1 && 
+        availableBatters[0].id === currentBowlerId;
+      
+      if (isOnlyCommonPlayerLeft) {
+        // Force bowler change - set needs bowler change
+        setNeedsBowlerChange(true);
+        // Auto-set common player as next batsman
+        // This will be handled in the wicket modal
+      }
+    }
+  };
 
   // Calculate run rate
   useEffect(() => {
@@ -288,6 +362,9 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
       setShowWicketModal(true);
       // Clear pending wicket details after ball is recorded
       setPendingWicketDetails(null);
+      
+      // Check if bowler needs to change due to common player scenario
+      checkBowlerChangeForCommonPlayer();
     }
   };
 

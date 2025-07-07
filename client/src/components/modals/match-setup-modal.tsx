@@ -133,6 +133,11 @@ export default function MatchSetupModal({ isOpen, onClose, onMatchStart, activeS
       .filter(mp => mp.status === "unavailable")
       .map(mp => mp.player.id);
 
+    // Get common players
+    const commonPlayers = matchPlayers
+      .filter(mp => mp.status === "common")
+      .map(mp => ({ id: mp.player.id, name: mp.player.name }));
+
     const match: CurrentMatch = {
       id: Date.now(),
       team1: { id: seriesTeams![0].id, name: team1Name },
@@ -147,6 +152,7 @@ export default function MatchSetupModal({ isOpen, onClose, onMatchStart, activeS
       nonStriker: { id: 0, name: "" },
       bowler: { id: 0, name: "" },
       unavailablePlayers,
+      commonPlayers,
     };
 
     onMatchStart(match);

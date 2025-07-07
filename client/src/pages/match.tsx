@@ -99,18 +99,18 @@ export default function Match() {
       <Card className="max-w-2xl mx-auto">
         <CardContent className="p-8">
           <div className="flex items-center space-x-2 mb-6">
-            <Settings className="w-6 h-6 text-gray-600" />
-            <h2 className="text-2xl font-bold text-gray-800">Match Setup</h2>
+            <Settings className="w-6 h-6 text-muted-foreground" />
+            <h2 className="text-2xl font-bold text-foreground">Match Setup</h2>
           </div>
 
           <div className="space-y-6">
             {activeSeries ? (
               <div className="text-center">
                 <div className="mb-4">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                  <h3 className="text-lg font-semibold text-foreground mb-2">
                     Active Series: {activeSeries?.name}
                   </h3>
-                  <p className="text-gray-600 mb-6">
+                  <p className="text-muted-foreground mb-6">
                     Set new match under this series
                   </p>
                 </div>
@@ -123,7 +123,7 @@ export default function Match() {
                 </Button>
               </div>
             ) : (
-              <div className="text-center text-gray-600">
+              <div className="text-center text-muted-foreground">
                 <p>No active series found. Please set up a series first.</p>
               </div>
             )}

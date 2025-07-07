@@ -148,10 +148,10 @@ export default function Stats() {
             <div className="flex items-center justify-between mb-4">
               <div className="text-center">
                 <div className="text-2xl font-bold text-purple-600">{seriesProgress.team1Wins}</div>
-                <div className="text-sm text-gray-600">{seriesProgress.team1.name}</div>
+                <div className="text-sm text-muted-foreground">{seriesProgress.team1.name}</div>
               </div>
               <div className="flex-1 mx-8">
-                <div className="bg-gray-200 rounded-full h-3">
+                <div className="bg-muted rounded-full h-3">
                   <div 
                     className="bg-gradient-to-r from-purple-400 to-green-400 h-3 rounded-full transition-all duration-500"
                     style={{ 
@@ -159,13 +159,13 @@ export default function Stats() {
                     }}
                   />
                 </div>
-                <div className="text-center text-sm text-gray-600 mt-2">
+                <div className="text-center text-sm text-muted-foreground mt-2">
                   First to {activeSeries.targetWins} wins
                 </div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-green-600">{seriesProgress.team2Wins}</div>
-                <div className="text-sm text-gray-600">{seriesProgress.team2.name}</div>
+                <div className="text-sm text-muted-foreground">{seriesProgress.team2.name}</div>
               </div>
             </div>
           </CardContent>

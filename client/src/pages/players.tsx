@@ -148,15 +148,15 @@ export default function Players() {
                     <div className="font-semibold">0</div>
                   </div>
                   <div>
-                    <div className="text-gray-600">Runs</div>
+                    <div className="text-muted-foreground">Runs</div>
                     <div className="font-semibold">0</div>
                   </div>
                   <div>
-                    <div className="text-gray-600">Wickets</div>
+                    <div className="text-muted-foreground">Wickets</div>
                     <div className="font-semibold">0</div>
                   </div>
                   <div>
-                    <div className="text-gray-600">Catches</div>
+                    <div className="text-muted-foreground">Catches</div>
                     <div className="font-semibold">0</div>
                   </div>
                 </div>
@@ -166,9 +166,9 @@ export default function Players() {
         </div>
       ) : (
         <div className="text-center py-12">
-          <User className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-800 mb-2">No Players Yet</h3>
-          <p className="text-gray-600 mb-6">Add players to your roster to get started</p>
+          <User className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-foreground mb-2">No Players Yet</h3>
+          <p className="text-muted-foreground mb-6">Add players to your roster to get started</p>
           <Button
             onClick={() => setShowAddModal(true)}
             className="bg-purple-600 hover:bg-purple-700 text-white"

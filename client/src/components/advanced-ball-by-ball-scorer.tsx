@@ -382,63 +382,83 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Batsmen side by side */}
-            <div className="md:col-span-2 grid grid-cols-2 gap-4">
-              <div>
-                <Label className="text-sm font-medium flex items-center gap-2">
-                  <User className="h-4 w-4" />
-                  Striker *
-                </Label>
-                <Select value={striker?.id ? striker.id.toString() : ""} onValueChange={(value) => {
-                  const player = battingPlayers.find(p => p.id === parseInt(value));
-                  if (player) setStriker(player);
-                }}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select striker" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {battingPlayers
-                      .filter(player => 
-                        player.id !== nonStriker?.id && 
-                        player.id !== bowler?.id &&
-                        !dismissedPlayers.includes(player.id) &&
-                        !match.unavailablePlayers?.includes(player.id)
-                      )
-                      .map((player) => (
-                        <SelectItem key={player.id} value={player.id.toString()}>
-                          {player.name}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label className="text-sm font-medium flex items-center gap-2">
-                  <User className="h-4 w-4" />
-                  Non-Striker
-                </Label>
-                <Select value={nonStriker?.id ? nonStriker.id.toString() : ""} onValueChange={(value) => {
-                  const player = battingPlayers.find(p => p.id === parseInt(value));
-                  if (player) setNonStriker(player);
-                }}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select non-striker" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {battingPlayers
-                      .filter(player => 
-                        player.id !== striker?.id && 
-                        player.id !== bowler?.id &&
-                        !dismissedPlayers.includes(player.id) &&
-                        !match.unavailablePlayers?.includes(player.id)
-                      )
-                      .map((player) => (
-                        <SelectItem key={player.id} value={player.id.toString()}>
-                          {player.name}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
+            {/* Batsmen with swap functionality */}
+            <div className="md:col-span-2">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="flex-1">
+                  <Label className="text-sm font-medium flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    Striker *
+                  </Label>
+                  <Select value={striker?.id ? striker.id.toString() : ""} onValueChange={(value) => {
+                    const player = battingPlayers.find(p => p.id === parseInt(value));
+                    if (player) setStriker(player);
+                  }}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Select striker" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {battingPlayers
+                        .filter(player => 
+                          player.id !== nonStriker?.id && 
+                          player.id !== bowler?.id &&
+                          !dismissedPlayers.includes(player.id) &&
+                          !match.unavailablePlayers?.includes(player.id)
+                        )
+                        .map((player) => (
+                          <SelectItem key={player.id} value={player.id.toString()}>
+                            {player.name}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="flex flex-col items-center justify-center mt-6">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const temp = striker;
+                      setStriker(nonStriker);
+                      setNonStriker(temp);
+                    }}
+                    disabled={!striker || !nonStriker}
+                    className="h-8 w-16"
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                  </Button>
+                  <span className="text-xs text-muted-foreground mt-1">Swap</span>
+                </div>
+                
+                <div className="flex-1">
+                  <Label className="text-sm font-medium flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    Non-Striker
+                  </Label>
+                  <Select value={nonStriker?.id ? nonStriker.id.toString() : ""} onValueChange={(value) => {
+                    const player = battingPlayers.find(p => p.id === parseInt(value));
+                    if (player) setNonStriker(player);
+                  }}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Select non-striker" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {battingPlayers
+                        .filter(player => 
+                          player.id !== striker?.id && 
+                          player.id !== bowler?.id &&
+                          !dismissedPlayers.includes(player.id) &&
+                          !match.unavailablePlayers?.includes(player.id)
+                        )
+                        .map((player) => (
+                          <SelectItem key={player.id} value={player.id.toString()}>
+                            {player.name}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
             {/* Bowler */}

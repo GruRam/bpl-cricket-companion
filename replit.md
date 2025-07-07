@@ -144,4 +144,14 @@ Changelog:
     - Ball counting uses decimal notation (0.1, 0.2) for extras
     - Wide balls allow dismissals (run out/stumped)
     - No-ball allows dismissals (run out) plus additional runs
+
+- July 07, 2025. Dark mode and app branding:
+  * Added dark mode toggle with system preference detection
+  * Implemented theme provider with local storage persistence
+  * Updated app name to "BPL Scorer (Buddies Premier League)"
+  * Enhanced navigation with app branding and theme toggle
+  * Added striker/non-striker swap functionality with rotate button
+  * Updated overs per side options to: 6, 7, 8, 9, 10, 12, 20
+  * Run out dismissals now include runs scored (0-4) before wicket
+  * Improved ball counting logic for proper cricket rules
 ```

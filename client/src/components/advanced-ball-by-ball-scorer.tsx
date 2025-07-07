@@ -980,6 +980,203 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
         </CardContent>
       </Card>
 
+      {/* Match Scorecard */}
+      <Card>
+        <CardHeader>
+          <CardTitle>{match.battingTeam.name} Scorecard</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-6">
+            {/* Batting Statistics */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Batting</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-2 px-2">Batsman</th>
+                      <th className="text-left py-2 px-2">How Out</th>
+                      <th className="text-right py-2 px-1">R</th>
+                      <th className="text-right py-2 px-1">B</th>
+                      <th className="text-right py-2 px-1">4s</th>
+                      <th className="text-right py-2 px-1">6s</th>
+                      <th className="text-right py-2 px-1">SR</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(() => {
+                      // Calculate batting statistics from allBalls
+                      const batsmanStats = {};
+                      
+                      allBalls.forEach(ball => {
+                        const batsman = ball.striker;
+                        if (!batsmanStats[batsman]) {
+                          batsmanStats[batsman] = {
+                            runs: 0,
+                            balls: 0,
+                            fours: 0,
+                            sixes: 0,
+                            isOut: dismissedPlayers.includes(battingPlayers.find(p => p.name === batsman)?.id),
+                            isOnStrike: batsman === striker?.name,
+                            isNonStriker: batsman === nonStriker?.name
+                          };
+                        }
+                        
+                        // Only count valid balls for balls faced
+                        if (!ball.entry.isWide && !ball.entry.isNoBall) {
+                          batsmanStats[batsman].balls++;
+                        }
+                        
+                        // Count runs scored by this batsman
+                        batsmanStats[batsman].runs += ball.entry.runs;
+                        
+                        // Count boundaries
+                        if (ball.entry.runs === 4) batsmanStats[batsman].fours++;
+                        if (ball.entry.runs === 6) batsmanStats[batsman].sixes++;
+                      });
+
+                      return Object.entries(batsmanStats).map(([batsman, stats]) => {
+                        const strikeRate = stats.balls > 0 ? ((stats.runs / stats.balls) * 100).toFixed(1) : '0.0';
+                        const status = stats.isOut ? 'out' : 
+                                     stats.isOnStrike ? 'not out *' : 
+                                     stats.isNonStriker ? 'not out' : 'not out';
+                        
+                        return (
+                          <tr key={batsman} className="border-b">
+                            <td className="py-2 px-2 font-medium">{batsman}</td>
+                            <td className="py-2 px-2 text-muted-foreground">{status}</td>
+                            <td className="py-2 px-1 text-right font-semibold">{stats.runs}</td>
+                            <td className="py-2 px-1 text-right">{stats.balls}</td>
+                            <td className="py-2 px-1 text-right">{stats.fours}</td>
+                            <td className="py-2 px-1 text-right">{stats.sixes}</td>
+                            <td className="py-2 px-1 text-right">{strikeRate}</td>
+                          </tr>
+                        );
+                      });
+                    })()}
+                    <tr className="border-b-2 border-foreground">
+                      <td className="py-2 px-2 font-bold">Extras</td>
+                      <td className="py-2 px-2 text-muted-foreground">
+                        {(() => {
+                          const wides = allBalls.filter(b => b.entry.isWide).length;
+                          const noBalls = allBalls.filter(b => b.entry.isNoBall).length;
+                          const extras = [];
+                          if (wides > 0) extras.push(`w ${wides}`);
+                          if (noBalls > 0) extras.push(`nb ${noBalls}`);
+                          return extras.length > 0 ? `(${extras.join(', ')})` : '';
+                        })()}
+                      </td>
+                      <td className="py-2 px-1 text-right font-bold">
+                        {allBalls.reduce((sum, ball) => sum + ball.entry.extras, 0)}
+                      </td>
+                      <td className="py-2 px-1 text-right">-</td>
+                      <td className="py-2 px-1 text-right">-</td>
+                      <td className="py-2 px-1 text-right">-</td>
+                      <td className="py-2 px-1 text-right">-</td>
+                    </tr>
+                    <tr className="bg-muted/50">
+                      <td className="py-3 px-2 font-bold">Total</td>
+                      <td className="py-3 px-2 text-muted-foreground">
+                        {totalScore.overs}.{totalScore.balls} Ov (RR: {runRate.toFixed(2)})
+                      </td>
+                      <td className="py-3 px-1 text-right font-bold text-lg">{totalScore.runs}</td>
+                      <td className="py-3 px-1 text-right">-</td>
+                      <td className="py-3 px-1 text-right">-</td>
+                      <td className="py-3 px-1 text-right">-</td>
+                      <td className="py-3 px-1 text-right">-</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Bowling Statistics */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Bowling</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-2 px-2">Bowler</th>
+                      <th className="text-right py-2 px-1">O</th>
+                      <th className="text-right py-2 px-1">M</th>
+                      <th className="text-right py-2 px-1">R</th>
+                      <th className="text-right py-2 px-1">W</th>
+                      <th className="text-right py-2 px-1">ECON</th>
+                      <th className="text-right py-2 px-1">WD</th>
+                      <th className="text-right py-2 px-1">NB</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(() => {
+                      // Calculate bowling statistics from allBalls
+                      const bowlerStats = {};
+                      
+                      allBalls.forEach(ball => {
+                        const bowlerName = ball.bowler;
+                        if (!bowlerStats[bowlerName]) {
+                          bowlerStats[bowlerName] = {
+                            overs: 0,
+                            balls: 0,
+                            maidens: 0,
+                            runs: 0,
+                            wickets: 0,
+                            wides: 0,
+                            noBalls: 0
+                          };
+                        }
+                        
+                        const stats = bowlerStats[bowlerName];
+                        
+                        // Count valid balls
+                        if (!ball.entry.isWide && !ball.entry.isNoBall) {
+                          stats.balls++;
+                        }
+                        
+                        // Count runs conceded (including extras)
+                        stats.runs += ball.entry.runs + ball.entry.extras;
+                        
+                        // Count wickets
+                        if (ball.entry.isWicket) {
+                          stats.wickets++;
+                        }
+                        
+                        // Count extras
+                        if (ball.entry.isWide) stats.wides++;
+                        if (ball.entry.isNoBall) stats.noBalls++;
+                      });
+
+                      // Calculate overs from balls
+                      Object.values(bowlerStats).forEach(stats => {
+                        stats.overs = Math.floor(stats.balls / 6) + (stats.balls % 6) / 10;
+                      });
+
+                      return Object.entries(bowlerStats).map(([bowlerName, stats]) => {
+                        const economy = stats.overs > 0 ? (stats.runs / stats.overs).toFixed(2) : '0.00';
+                        const oversDisplay = Math.floor(stats.balls / 6) + (stats.balls % 6 > 0 ? `.${stats.balls % 6}` : '');
+                        
+                        return (
+                          <tr key={bowlerName} className="border-b">
+                            <td className="py-2 px-2 font-medium">{bowlerName}</td>
+                            <td className="py-2 px-1 text-right">{oversDisplay}</td>
+                            <td className="py-2 px-1 text-right">{stats.maidens}</td>
+                            <td className="py-2 px-1 text-right">{stats.runs}</td>
+                            <td className="py-2 px-1 text-right font-semibold">{stats.wickets}</td>
+                            <td className="py-2 px-1 text-right">{economy}</td>
+                            <td className="py-2 px-1 text-right">{stats.wides}</td>
+                            <td className="py-2 px-1 text-right">{stats.noBalls}</td>
+                          </tr>
+                        );
+                      });
+                    })()}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Wicket Details Modal */}
       <WicketDetailsModal
         isOpen={showWicketModal}

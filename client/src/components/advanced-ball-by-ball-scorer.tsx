@@ -604,6 +604,50 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
         </CardContent>
       </Card>
 
+      {/* Bowler Change Alert - Right after Current Players for visibility */}
+      {needsBowlerChange && (
+        <Card className="border-red-200 bg-red-50 dark:bg-red-900/20">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-red-700 dark:text-red-300">
+                <AlertCircle className="h-5 w-5" />
+                <span className="font-medium">Over completed! Please select a new bowler</span>
+              </div>
+              <Button
+                onClick={() => setNeedsBowlerChange(false)}
+                variant="outline"
+                size="sm"
+                className="bg-green-600 text-white hover:bg-green-700 border-green-600"
+              >
+                Done
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* New Batsman Alert - Right after Current Players for visibility */}
+      {needsBatsmanChange && (
+        <Card className="border-red-200 bg-red-50 dark:bg-red-900/20">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-red-700 dark:text-red-300">
+                <AlertCircle className="h-5 w-5" />
+                <span className="font-medium">Wicket taken! Please select a new batsman</span>
+              </div>
+              <Button
+                onClick={() => setNeedsBatsmanChange(false)}
+                variant="outline"
+                size="sm"
+                className="bg-green-600 text-white hover:bg-green-700 border-green-600"
+              >
+                Done
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Status Indicators */}
       {(needsBowlerChange || needsBatsmanChange) && (
         <Card className="border-amber-200 bg-amber-50 dark:bg-amber-900/20">
@@ -750,42 +794,12 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
         </CardContent>
       </Card>
 
+
+
       {/* Current Over Progress */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span>Current Over Progress</span>
-            <div className="flex gap-2">
-              {needsBowlerChange && (
-                <Badge variant="destructive" className="animate-pulse">
-                  <AlertCircle className="h-3 w-3 mr-1" />
-                  Change Bowler
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-4 w-4 p-0 ml-1 text-white hover:text-white"
-                    onClick={() => setNeedsBowlerChange(false)}
-                  >
-                    ×
-                  </Button>
-                </Badge>
-              )}
-              {needsBatsmanChange && (
-                <Badge variant="destructive" className="animate-pulse">
-                  <AlertCircle className="h-3 w-3 mr-1" />
-                  New Batsman
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-4 w-4 p-0 ml-1 text-white hover:text-white"
-                    onClick={() => setNeedsBatsmanChange(false)}
-                  >
-                    ×
-                  </Button>
-                </Badge>
-              )}
-            </div>
-          </CardTitle>
+          <CardTitle>Current Over Progress</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">

@@ -166,7 +166,8 @@ Changelog:
     - Bowler change mandatory after each over completion
     - New batter selection mandatory after wickets before proceeding
     - All ball entry buttons disabled until required changes are made
-    - Clear status indicators showing required actions
+    - Prominent red alert cards with "Done" buttons positioned near ball-by-ball tracking
+    - Clear visual feedback showing required actions before proceeding
   * Added single batting mode functionality:
     - Automatically detects when only one batter remains
     - Remaining batter stays on strike regardless of runs scored

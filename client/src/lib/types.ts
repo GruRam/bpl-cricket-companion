@@ -27,6 +27,43 @@ export interface CurrentMatch {
   oversPerSide: number; // Total overs allowed per innings
 }
 
+export interface SavedMatchState {
+  // Match context
+  match: CurrentMatch;
+  
+  // Game state
+  currentInnings: number;
+  currentOver: number;
+  currentBallInOver: number;
+  ballPosition: number;
+  totalScore: { runs: number; wickets: number; overs: number; balls: number };
+  runRate: number;
+  
+  // Players
+  striker: { id: number; name: string };
+  nonStriker: { id: number; name: string };
+  bowler: { id: number; name: string };
+  dismissedPlayers: number[];
+  
+  // Match state
+  isInningsComplete: boolean;
+  isMatchComplete: boolean;
+  showInningsBreak: boolean;
+  firstInningsScore: { runs: number; wickets: number; overs: number; balls: number } | null;
+  
+  // Ball data
+  allBalls: any[];
+  overBalls: any[];
+  
+  // Flags
+  needsBowlerChange: boolean;
+  needsBatsmanChange: boolean;
+  singleBattingMode: boolean;
+  
+  // Timestamp
+  savedAt: string;
+}
+
 export interface PlayerStat {
   playerId: number;
   name: string;

@@ -42,9 +42,14 @@ export default function Match() {
   }, [activeSeries]);
 
   const handleMatchStart = (match: CurrentMatch) => {
+    // Clear any existing saved state when starting a new match
+    if (activeSeries) {
+      localStorage.removeItem(`match_${activeSeries.id}`);
+    }
     setCurrentMatch(match);
     setMatchStarted(true);
     setShowResumeModal(false);
+    setSavedMatchState(null);
   };
 
   const handleResumeMatch = () => {
@@ -53,22 +58,24 @@ export default function Match() {
         id: activeSeries.id,
         team1: activeSeries.team1,
         team2: activeSeries.team2,
-        currentInnings: 1,
-        battingTeam: activeSeries.team1,
-        bowlingTeam: activeSeries.team2,
+        currentInnings: savedMatchState.currentInnings || 1,
+        battingTeam: savedMatchState.currentInnings === 2 ? activeSeries.team2 : activeSeries.team1,
+        bowlingTeam: savedMatchState.currentInnings === 2 ? activeSeries.team1 : activeSeries.team2,
         score: savedMatchState.totalScore,
         currentOver: savedMatchState.currentOver,
         currentBall: savedMatchState.currentBallInOver,
         striker: savedMatchState.striker,
         nonStriker: savedMatchState.nonStriker,
         bowler: savedMatchState.bowler,
-        unavailablePlayers: savedMatchState.unavailablePlayers,
-        commonPlayers: savedMatchState.commonPlayers,
-        oversPerSide: savedMatchState.oversPerSide || 8, // Default to 8 if not saved
+        unavailablePlayers: savedMatchState.match?.unavailablePlayers || [],
+        commonPlayers: savedMatchState.match?.commonPlayers || [],
+        oversPerSide: savedMatchState.match?.oversPerSide || 8, // Default to 8 if not saved
       };
       setCurrentMatch(resumedMatch);
       setMatchStarted(true);
       setShowResumeModal(false);
+      // Keep saved state available for the component to use
+      // It will be cleared when the match is complete
     }
   };
 
@@ -87,6 +94,7 @@ export default function Match() {
         <AdvancedBallByBallScorer
           match={currentMatch}
           onWicketClick={() => setShowWicketModal(true)}
+          savedState={savedMatchState}
         />
         <WicketDetailsModal
           isOpen={showWicketModal}

@@ -14,7 +14,7 @@ import {
   User, Circle, Info, CheckCircle
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import type { CurrentMatch, BallEntry } from "@/lib/types";
+import type { CurrentMatch, BallEntry, SavedMatchState } from "@/lib/types";
 import type { Player } from "@shared/schema";
 import WicketDetailsModal from "@/components/modals/wicket-details-modal";
 
@@ -27,6 +27,7 @@ interface BallByBallScorerProps {
     fielder?: string;
     runsScored?: number;
   }) => void;
+  savedState?: SavedMatchState;
 }
 
 interface CompletedBall {
@@ -40,29 +41,28 @@ interface CompletedBall {
   commentary: string;
 }
 
-export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicketDetails }: BallByBallScorerProps) {
-  // Match state
-  const [currentInnings, setCurrentInnings] = useState(1);
-  const [striker, setStriker] = useState(match.striker);
-  const [nonStriker, setNonStriker] = useState(match.nonStriker);
-  const [bowler, setBowler] = useState(match.bowler);
-  const [totalScore, setTotalScore] = useState({ runs: 0, wickets: 0, overs: 0, balls: 0 });
-  const [runRate, setRunRate] = useState(0);
+export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicketDetails, savedState }: BallByBallScorerProps) {
+  // Match state - initialize from saved state or defaults
+  const [currentInnings, setCurrentInnings] = useState(savedState?.currentInnings || 1);
+  const [striker, setStriker] = useState(savedState?.striker || match.striker);
+  const [nonStriker, setNonStriker] = useState(savedState?.nonStriker || match.nonStriker);
+  const [bowler, setBowler] = useState(savedState?.bowler || match.bowler);
+  const [totalScore, setTotalScore] = useState(savedState?.totalScore || { runs: 0, wickets: 0, overs: 0, balls: 0 });
+  const [runRate, setRunRate] = useState(savedState?.runRate || 0);
   
   // Current over state
-  const [currentOver, setCurrentOver] = useState(1);
-  const [currentBallInOver, setCurrentBallInOver] = useState(1);
-  const [overBalls, setOverBalls] = useState<CompletedBall[]>([]);
-  const [allBalls, setAllBalls] = useState<CompletedBall[]>([]);
-  const [ballPosition, setBallPosition] = useState(1); // Position in over for display
- // Count of extra balls in current over
-  const [needsBowlerChange, setNeedsBowlerChange] = useState(false);
-  const [needsBatsmanChange, setNeedsBatsmanChange] = useState(false);
-  const [singleBattingMode, setSingleBattingMode] = useState(false);
-  const [isInningsComplete, setIsInningsComplete] = useState(false);
-  const [isMatchComplete, setIsMatchComplete] = useState(false);
-  const [showInningsBreak, setShowInningsBreak] = useState(false);
-  const [firstInningsScore, setFirstInningsScore] = useState<{ runs: number; wickets: number; overs: number; balls: number } | null>(null);
+  const [currentOver, setCurrentOver] = useState(savedState?.currentOver || 1);
+  const [currentBallInOver, setCurrentBallInOver] = useState(savedState?.currentBallInOver || 1);
+  const [overBalls, setOverBalls] = useState<CompletedBall[]>(savedState?.overBalls || []);
+  const [allBalls, setAllBalls] = useState<CompletedBall[]>(savedState?.allBalls || []);
+  const [ballPosition, setBallPosition] = useState(savedState?.ballPosition || 1); // Position in over for display
+  const [needsBowlerChange, setNeedsBowlerChange] = useState(savedState?.needsBowlerChange || false);
+  const [needsBatsmanChange, setNeedsBatsmanChange] = useState(savedState?.needsBatsmanChange || false);
+  const [singleBattingMode, setSingleBattingMode] = useState(savedState?.singleBattingMode || false);
+  const [isInningsComplete, setIsInningsComplete] = useState(savedState?.isInningsComplete || false);
+  const [isMatchComplete, setIsMatchComplete] = useState(savedState?.isMatchComplete || false);
+  const [showInningsBreak, setShowInningsBreak] = useState(savedState?.showInningsBreak || false);
+  const [firstInningsScore, setFirstInningsScore] = useState<{ runs: number; wickets: number; overs: number; balls: number } | null>(savedState?.firstInningsScore || null);
   const [pendingWicketDetails, setPendingWicketDetails] = useState<{
     batsmanOut: string;
     dismissalType: string;
@@ -70,7 +70,7 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
     runsScored?: number;
   } | null>(null);
   const [showWicketModal, setShowWicketModal] = useState(false);
-  const [dismissedPlayers, setDismissedPlayers] = useState<number[]>([]);
+  const [dismissedPlayers, setDismissedPlayers] = useState<number[]>(savedState?.dismissedPlayers || []);
   
   // UI state
   const [quickEntryMode, setQuickEntryMode] = useState(true);
@@ -85,6 +85,53 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
     extras: 0
   });
   
+  // Auto-save match state function
+  const saveMatchState = () => {
+    // Don't save if match is complete
+    if (isMatchComplete) {
+      localStorage.removeItem(`match_${match.id}`);
+      return;
+    }
+    
+    const currentState: SavedMatchState = {
+      match,
+      currentInnings,
+      currentOver,
+      currentBallInOver,
+      ballPosition,
+      totalScore,
+      runRate,
+      striker,
+      nonStriker,
+      bowler,
+      dismissedPlayers,
+      isInningsComplete,
+      isMatchComplete,
+      showInningsBreak,
+      firstInningsScore,
+      allBalls,
+      overBalls,
+      needsBowlerChange,
+      needsBatsmanChange,
+      singleBattingMode,
+      savedAt: new Date().toISOString()
+    };
+    
+    localStorage.setItem(`match_${match.id}`, JSON.stringify(currentState));
+  };
+
+  // Clear saved state when match is complete
+  const clearSavedState = () => {
+    localStorage.removeItem(`match_${match.id}`);
+  };
+
+  // Auto-save after every ball entry
+  useEffect(() => {
+    if (allBalls.length > 0) {
+      saveMatchState();
+    }
+  }, [allBalls, totalScore, currentOver, currentInnings, striker, nonStriker, bowler, dismissedPlayers, isInningsComplete, isMatchComplete]);
+
   // Get team players for contextual dropdowns
   const { data: battingTeamPlayers = [] } = useQuery<Player[]>({
     queryKey: ["/api/teams", match.battingTeam.id, "players"],
@@ -394,6 +441,8 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
             setShowInningsBreak(true);
           } else {
             setIsMatchComplete(true);
+            // Clear saved state when match is complete
+            clearSavedState();
           }
         } else {
           // Block all ball entry until bowler is changed

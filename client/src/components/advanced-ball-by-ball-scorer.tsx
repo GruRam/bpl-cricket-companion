@@ -60,6 +60,9 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
   const [needsBatsmanChange, setNeedsBatsmanChange] = useState(false);
   const [singleBattingMode, setSingleBattingMode] = useState(false);
   const [isInningsComplete, setIsInningsComplete] = useState(false);
+  const [isMatchComplete, setIsMatchComplete] = useState(false);
+  const [showInningsBreak, setShowInningsBreak] = useState(false);
+  const [firstInningsScore, setFirstInningsScore] = useState<{ runs: number; wickets: number; overs: number; balls: number } | null>(null);
   const [pendingWicketDetails, setPendingWicketDetails] = useState<{
     batsmanOut: string;
     dismissalType: string;
@@ -384,6 +387,14 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
         // Check if innings is complete after this over
         if (currentOver >= match.oversPerSide) {
           setIsInningsComplete(true);
+          // Check if this is the end of first or second innings
+          if (currentInnings === 1) {
+            // Save first innings score
+            setFirstInningsScore({ ...totalScore });
+            setShowInningsBreak(true);
+          } else {
+            setIsMatchComplete(true);
+          }
         } else {
           // Block all ball entry until bowler is changed
           setNeedsBowlerChange(true);
@@ -448,6 +459,40 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
     });
   };
 
+  // Start second innings
+  const startSecondInnings = () => {
+    // Swap batting and bowling teams
+    const newBattingTeam = match.bowlingTeam;
+    const newBowlingTeam = match.battingTeam;
+    
+    // Update match object (note: this is local state, not persisted)
+    match.currentInnings = 2;
+    match.battingTeam = newBattingTeam;
+    match.bowlingTeam = newBowlingTeam;
+    
+    // Reset all game state for new innings
+    setCurrentInnings(2);
+    setCurrentOver(1);
+    setCurrentBallInOver(1);
+    setBallPosition(1);
+    setOverBalls([]);
+    setTotalScore({ runs: 0, wickets: 0, overs: 0, balls: 0 });
+    setRunRate(0);
+    setDismissedPlayers([]);
+    
+    // Clear player selections (they need to be reselected)
+    setStriker({ id: 0, name: "" });
+    setNonStriker({ id: 0, name: "" });
+    setBowler({ id: 0, name: "" });
+    
+    // Reset state flags
+    setIsInningsComplete(false);
+    setShowInningsBreak(false);
+    setNeedsBowlerChange(false);
+    setNeedsBatsmanChange(true); // Force player selection
+    setSingleBattingMode(false);
+  };
+
   return (
     <div className="space-y-6">
       {/* Match Header */}
@@ -463,6 +508,16 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
           </CardTitle>
         </CardHeader>
         <CardContent>
+          {/* First Innings Score Display */}
+          {currentInnings === 2 && firstInningsScore && (
+            <div className="mb-4 p-3 bg-muted rounded-lg">
+              <div className="text-sm text-muted-foreground mb-1">First Innings:</div>
+              <div className="font-medium">
+                {match.team1.id === match.battingTeam.id ? match.team2.name : match.team1.name}: {firstInningsScore.runs}/{firstInningsScore.wickets} ({firstInningsScore.overs}.{firstInningsScore.balls} overs)
+              </div>
+            </div>
+          )}
+          
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="text-center">
               <div className="text-3xl font-bold text-blue-600">
@@ -613,8 +668,48 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
         </CardContent>
       </Card>
 
-      {/* Innings Complete Alert */}
-      {isInningsComplete && (
+      {/* Innings Break Alert */}
+      {showInningsBreak && (
+        <Card className="border-blue-200 bg-blue-50 dark:bg-blue-900/20">
+          <CardContent className="pt-6">
+            <div className="text-center space-y-4">
+              <div className="flex items-center justify-center gap-2 text-blue-700 dark:text-blue-300">
+                <Trophy className="h-5 w-5" />
+                <span className="font-medium">First Innings Complete!</span>
+              </div>
+              <div className="text-sm text-blue-600 dark:text-blue-400">
+                {match.battingTeam.name} scored {totalScore.runs}/{totalScore.wickets} in {match.oversPerSide} overs
+              </div>
+              <Button
+                onClick={startSecondInnings}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                Start Second Innings
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Match Complete Alert */}
+      {isMatchComplete && (
+        <Card className="border-green-200 bg-green-50 dark:bg-green-900/20">
+          <CardContent className="pt-6">
+            <div className="text-center space-y-4">
+              <div className="flex items-center justify-center gap-2 text-green-700 dark:text-green-300">
+                <Trophy className="h-6 w-6" />
+                <span className="font-bold text-lg">Match Complete!</span>
+              </div>
+              <div className="text-sm text-green-600 dark:text-green-400">
+                Final scores: Both innings finished
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Single Innings Complete Alert (fallback) */}
+      {isInningsComplete && !showInningsBreak && !isMatchComplete && (
         <Card className="border-green-200 bg-green-50 dark:bg-green-900/20">
           <CardContent className="pt-6">
             <div className="flex items-center justify-center gap-2 text-green-700 dark:text-green-300">
@@ -735,9 +830,9 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
                   <Button
                     key={button.label}
                     className={`h-12 font-bold ${button.color}`}
-                    disabled={needsBowlerChange || needsBatsmanChange || isInningsComplete}
+                    disabled={needsBowlerChange || needsBatsmanChange || isInningsComplete || isMatchComplete}
                     onClick={() => {
-                      if (needsBowlerChange || needsBatsmanChange || isInningsComplete) return;
+                      if (needsBowlerChange || needsBatsmanChange || isInningsComplete || isMatchComplete) return;
                       if (button.label === "W") {
                         setShowWicketModal(true);
                       } else if (button.label === "NB") {

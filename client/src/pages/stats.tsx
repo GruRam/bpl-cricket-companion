@@ -21,6 +21,25 @@ export default function Stats() {
     enabled: !!activeSeries?.id,
   });
 
+  // Get real-time player stats for the active series
+  const { data: playerStats = [], isLoading: isLoadingStats } = useQuery<Array<{
+    id: number;
+    playerId: number;
+    seriesId: number;
+    totalRuns: number;
+    totalBalls: number;
+    totalWickets: number;
+    totalCatches: number;
+    ballsBowled: number;
+    runsConceded: number;
+    highestScore: number;
+    player: Player;
+  }>>({
+    queryKey: [`/api/series/${activeSeries?.id}/stats`],
+    enabled: !!activeSeries?.id,
+    refetchInterval: 5000, // Refresh every 5 seconds for real-time updates
+  });
+
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
@@ -65,7 +84,8 @@ export default function Stats() {
       </div>
 
       {activeFilter === 'individual' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Top Batsmen */}
           <Card>
             <CardContent className="p-6">
@@ -73,25 +93,35 @@ export default function Stats() {
                 <Target className="w-5 h-5 mr-2 text-green-600" />
                 Top Batsmen
               </h3>
-              {players && players.length > 0 ? (
+              {playerStats && playerStats.length > 0 ? (
                 <div className="space-y-4">
-                  {players.slice(0, 3).map((player: any, index: number) => (
-                    <div key={player.id} className="flex justify-between items-center">
-                      <div className="flex items-center space-x-3">
-                        <div className={`w-8 h-8 ${getAvatarColor(index)} rounded-full flex items-center justify-center text-white text-sm font-semibold`}>
-                          {getInitials(player.name)}
+                  {playerStats
+                    .filter(p => p.totalRuns > 0)
+                    .sort((a, b) => b.totalRuns - a.totalRuns)
+                    .slice(0, 5)
+                    .map((stat, index) => {
+                      const avg = stat.totalBalls > 0 ? (stat.totalRuns / Math.max(1, stat.totalBalls)) * 100 : 0;
+                      const sr = stat.totalBalls > 0 ? (stat.totalRuns / stat.totalBalls) * 100 : 0;
+                      return (
+                        <div key={stat.playerId} className="flex justify-between items-center">
+                          <div className="flex items-center space-x-3">
+                            <div className={`w-8 h-8 ${getAvatarColor(index)} rounded-full flex items-center justify-center text-white text-sm font-semibold`}>
+                              {getInitials(stat.player.name)}
+                            </div>
+                            <div>
+                              <div className="font-medium text-foreground">{stat.player.name}</div>
+                              <div className="text-sm text-muted-foreground">
+                                Avg: {avg.toFixed(1)} | SR: {sr.toFixed(1)} | HS: {stat.highestScore}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-semibold text-foreground">{stat.totalRuns}</div>
+                            <div className="text-sm text-muted-foreground">runs ({stat.totalBalls}b)</div>
+                          </div>
                         </div>
-                        <div>
-                          <div className="font-medium text-foreground">{player.name}</div>
-                          <div className="text-sm text-muted-foreground">Avg: 0.0 | SR: 0.0</div>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-semibold text-foreground">0</div>
-                        <div className="text-sm text-muted-foreground">runs</div>
-                      </div>
-                    </div>
-                  ))}
+                      );
+                    })}
                 </div>
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
@@ -109,25 +139,37 @@ export default function Stats() {
                 <TrendingUp className="w-5 h-5 mr-2 text-red-600" />
                 Top Bowlers
               </h3>
-              {players && players.length > 0 ? (
+              {playerStats && playerStats.length > 0 ? (
                 <div className="space-y-4">
-                  {players.slice(0, 3).map((player: any, index: number) => (
-                    <div key={player.id} className="flex justify-between items-center">
-                      <div className="flex items-center space-x-3">
-                        <div className={`w-8 h-8 ${getAvatarColor(index + 3)} rounded-full flex items-center justify-center text-white text-sm font-semibold`}>
-                          {getInitials(player.name)}
+                  {playerStats
+                    .filter(p => p.totalWickets > 0)
+                    .sort((a, b) => b.totalWickets - a.totalWickets)
+                    .slice(0, 5)
+                    .map((stat, index) => {
+                      const bowlingAvg = stat.totalWickets > 0 ? stat.runsConceded / stat.totalWickets : 0;
+                      const economy = stat.ballsBowled > 0 ? (stat.runsConceded / stat.ballsBowled) * 6 : 0;
+                      const overs = Math.floor(stat.ballsBowled / 6);
+                      const balls = stat.ballsBowled % 6;
+                      return (
+                        <div key={stat.playerId} className="flex justify-between items-center">
+                          <div className="flex items-center space-x-3">
+                            <div className={`w-8 h-8 ${getAvatarColor(index + 3)} rounded-full flex items-center justify-center text-white text-sm font-semibold`}>
+                              {getInitials(stat.player.name)}
+                            </div>
+                            <div>
+                              <div className="font-medium text-foreground">{stat.player.name}</div>
+                              <div className="text-sm text-muted-foreground">
+                                Avg: {bowlingAvg.toFixed(1)} | Econ: {economy.toFixed(1)} | O: {overs}.{balls}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-semibold text-foreground">{stat.totalWickets}</div>
+                            <div className="text-sm text-muted-foreground">wickets ({stat.runsConceded}r)</div>
+                          </div>
                         </div>
-                        <div>
-                          <div className="font-medium text-foreground">{player.name}</div>
-                          <div className="text-sm text-muted-foreground">Avg: 0.0 | Econ: 0.0</div>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-semibold text-foreground">0</div>
-                        <div className="text-sm text-muted-foreground">wickets</div>
-                      </div>
-                    </div>
-                  ))}
+                      );
+                    })}
                 </div>
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
@@ -138,6 +180,104 @@ export default function Stats() {
             </CardContent>
           </Card>
         </div>
+        
+        {/* Comprehensive Player Statistics Table */}
+        <Card className="mb-8">
+          <CardContent className="p-6">
+            <h3 className="text-lg font-semibold text-foreground mb-4">Complete Player Statistics</h3>
+            {playerStats && playerStats.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full table-auto">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left p-2 text-sm font-semibold text-foreground">Player</th>
+                      <th className="text-center p-2 text-sm font-semibold text-foreground">Batting</th>
+                      <th className="text-center p-2 text-sm font-semibold text-foreground">Runs</th>
+                      <th className="text-center p-2 text-sm font-semibold text-foreground">Balls</th>
+                      <th className="text-center p-2 text-sm font-semibold text-foreground">Avg</th>
+                      <th className="text-center p-2 text-sm font-semibold text-foreground">SR</th>
+                      <th className="text-center p-2 text-sm font-semibold text-foreground">HS</th>
+                      <th className="text-center p-2 text-sm font-semibold text-foreground">Bowling</th>
+                      <th className="text-center p-2 text-sm font-semibold text-foreground">Overs</th>
+                      <th className="text-center p-2 text-sm font-semibold text-foreground">Wickets</th>
+                      <th className="text-center p-2 text-sm font-semibold text-foreground">Runs</th>
+                      <th className="text-center p-2 text-sm font-semibold text-foreground">Econ</th>
+                      <th className="text-center p-2 text-sm font-semibold text-foreground">Catches</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {playerStats
+                      .sort((a, b) => b.totalRuns - a.totalRuns)
+                      .map((stat, index) => {
+                        const battingAvg = stat.totalBalls > 0 ? (stat.totalRuns / Math.max(1, stat.totalBalls)) * 100 : 0;
+                        const strikeRate = stat.totalBalls > 0 ? (stat.totalRuns / stat.totalBalls) * 100 : 0;
+                        const bowlingAvg = stat.totalWickets > 0 ? stat.runsConceded / stat.totalWickets : 0;
+                        const economy = stat.ballsBowled > 0 ? (stat.runsConceded / stat.ballsBowled) * 6 : 0;
+                        const overs = Math.floor(stat.ballsBowled / 6);
+                        const balls = stat.ballsBowled % 6;
+                        const oversDisplay = balls > 0 ? `${overs}.${balls}` : `${overs}`;
+                        
+                        return (
+                          <tr key={stat.playerId} className="border-b hover:bg-muted/50">
+                            <td className="p-2">
+                              <div className="flex items-center space-x-2">
+                                <div className={`w-6 h-6 ${getAvatarColor(index)} rounded-full flex items-center justify-center text-white text-xs font-semibold`}>
+                                  {getInitials(stat.player.name)}
+                                </div>
+                                <span className="font-medium text-foreground">{stat.player.name}</span>
+                              </div>
+                            </td>
+                            <td className="p-2 text-center text-sm text-muted-foreground">
+                              {stat.totalRuns > 0 ? "✓" : "-"}
+                            </td>
+                            <td className="p-2 text-center text-sm text-foreground font-medium">
+                              {stat.totalRuns}
+                            </td>
+                            <td className="p-2 text-center text-sm text-muted-foreground">
+                              {stat.totalBalls}
+                            </td>
+                            <td className="p-2 text-center text-sm text-muted-foreground">
+                              {stat.totalBalls > 0 ? battingAvg.toFixed(1) : "-"}
+                            </td>
+                            <td className="p-2 text-center text-sm text-muted-foreground">
+                              {stat.totalBalls > 0 ? strikeRate.toFixed(1) : "-"}
+                            </td>
+                            <td className="p-2 text-center text-sm text-foreground font-medium">
+                              {stat.highestScore > 0 ? stat.highestScore : "-"}
+                            </td>
+                            <td className="p-2 text-center text-sm text-muted-foreground">
+                              {stat.ballsBowled > 0 ? "✓" : "-"}
+                            </td>
+                            <td className="p-2 text-center text-sm text-muted-foreground">
+                              {stat.ballsBowled > 0 ? oversDisplay : "-"}
+                            </td>
+                            <td className="p-2 text-center text-sm text-foreground font-medium">
+                              {stat.totalWickets}
+                            </td>
+                            <td className="p-2 text-center text-sm text-muted-foreground">
+                              {stat.runsConceded}
+                            </td>
+                            <td className="p-2 text-center text-sm text-muted-foreground">
+                              {stat.ballsBowled > 0 ? economy.toFixed(1) : "-"}
+                            </td>
+                            <td className="p-2 text-center text-sm text-foreground font-medium">
+                              {stat.totalCatches}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <Award className="w-12 h-12 mx-auto mb-2 text-muted-foreground" />
+                <p>No player statistics available</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+        </>
       )}
 
       {/* Series Progress */}

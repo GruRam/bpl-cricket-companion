@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -131,6 +132,33 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
       saveMatchState();
     }
   }, [allBalls, totalScore, currentOver, currentInnings, striker, nonStriker, bowler, dismissedPlayers, isInningsComplete, isMatchComplete]);
+
+  // Get active series for stats updates
+  const { data: activeSeries } = useQuery({
+    queryKey: ["/api/series/active"],
+  });
+
+  // Mutation for updating player stats
+  const updateStatsMutation = useMutation({
+    mutationFn: async (ballData: {
+      strikerId: number;
+      nonStrikerId: number;
+      bowlerId: number;
+      runs: number;
+      isWicket: boolean;
+      wicketPlayerId?: number;
+      fielderId?: number;
+      seriesId: number;
+    }) => {
+      return await apiRequest("/api/stats/update-from-ball", {
+        method: "POST",
+        body: JSON.stringify(ballData),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+    },
+  });
 
   // Get team players for contextual dropdowns
   const { data: battingTeamPlayers = [] } = useQuery<Player[]>({
@@ -400,6 +428,20 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
     
     // Update ball position for display
     setBallPosition(prev => prev + 1);
+    
+    // Update player stats in real-time
+    if (activeSeries?.id) {
+      updateStatsMutation.mutate({
+        strikerId: striker.id,
+        nonStrikerId: nonStriker.id,
+        bowlerId: bowler.id,
+        runs: entry.runs,
+        isWicket: entry.isWicket,
+        wicketPlayerId: entry.isWicket ? (pendingWicketDetails?.batsmanOut === 'striker' ? striker.id : nonStriker.id) : undefined,
+        fielderId: pendingWicketDetails?.fielder ? parseInt(pendingWicketDetails.fielder) : undefined,
+        seriesId: activeSeries.id, // Using active series ID
+      });
+    }
     
     // Update total score
     setTotalScore(prev => ({

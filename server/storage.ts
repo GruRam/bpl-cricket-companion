@@ -55,6 +55,17 @@ export interface IStorage {
   // Stats
   getPlayerStats(playerId: number, seriesId?: number): Promise<PlayerStats[]>;
   updatePlayerStats(playerId: number, seriesId: number, updates: Partial<PlayerStats>): Promise<void>;
+  updatePlayerStatsFromBall(ballData: {
+    strikerId: number;
+    nonStrikerId: number;
+    bowlerId: number;
+    runs: number;
+    isWicket: boolean;
+    wicketPlayerId?: number;
+    fielderId?: number;
+    seriesId: number;
+  }): Promise<void>;
+  getAllPlayerStats(seriesId?: number): Promise<(PlayerStats & { player: Player })[]>;
   
   // Dashboard
   getSeriesProgress(seriesId: number): Promise<{ team1Wins: number; team2Wins: number; team1: Team; team2: Team }>;
@@ -212,6 +223,121 @@ export class DatabaseStorage implements IStorage {
         .where(and(eq(playerStats.playerId, playerId), eq(playerStats.seriesId, seriesId)));
     } else {
       await db.insert(playerStats).values({ playerId, seriesId, ...updates });
+    }
+  }
+
+  async updatePlayerStatsFromBall(ballData: {
+    strikerId: number;
+    nonStrikerId: number;
+    bowlerId: number;
+    runs: number;
+    isWicket: boolean;
+    wicketPlayerId?: number;
+    fielderId?: number;
+    seriesId: number;
+  }): Promise<void> {
+    const { strikerId, nonStrikerId, bowlerId, runs, isWicket, wicketPlayerId, fielderId, seriesId } = ballData;
+
+    // Get or create stats for striker
+    const strikerStats = await this.getOrCreatePlayerStats(strikerId, seriesId);
+    
+    // Update striker stats
+    await this.updatePlayerStats(strikerId, seriesId, {
+      totalRuns: (strikerStats.totalRuns || 0) + runs,
+      totalBalls: (strikerStats.totalBalls || 0) + 1,
+      highestScore: Math.max(strikerStats.highestScore || 0, runs), // This would need match context for actual highest score
+    });
+
+    // Get or create stats for bowler
+    const bowlerStats = await this.getOrCreatePlayerStats(bowlerId, seriesId);
+    
+    // Update bowler stats
+    await this.updatePlayerStats(bowlerId, seriesId, {
+      ballsBowled: (bowlerStats.ballsBowled || 0) + 1,
+      runsConceded: (bowlerStats.runsConceded || 0) + runs,
+      totalWickets: isWicket && wicketPlayerId ? (bowlerStats.totalWickets || 0) + 1 : bowlerStats.totalWickets,
+    });
+
+    // Update fielder stats for catches
+    if (isWicket && fielderId && fielderId !== bowlerId) {
+      const fielderStats = await this.getOrCreatePlayerStats(fielderId, seriesId);
+      await this.updatePlayerStats(fielderId, seriesId, {
+        totalCatches: (fielderStats.totalCatches || 0) + 1,
+      });
+    }
+  }
+
+  private async getOrCreatePlayerStats(playerId: number, seriesId: number): Promise<PlayerStats> {
+    const existing = await db.select().from(playerStats)
+      .where(and(eq(playerStats.playerId, playerId), eq(playerStats.seriesId, seriesId)))
+      .limit(1);
+
+    if (existing.length > 0) {
+      return existing[0];
+    }
+
+    // Create new stats entry
+    const [newStats] = await db.insert(playerStats).values({
+      playerId,
+      seriesId,
+      matchesPlayed: 0,
+      totalRuns: 0,
+      totalBalls: 0,
+      totalWickets: 0,
+      totalCatches: 0,
+      totalWins: 0,
+      seriesWins: 0,
+      winsAsCaptain: 0,
+      highestScore: 0,
+      ballsBowled: 0,
+      runsConceded: 0,
+    }).returning();
+
+    return newStats;
+  }
+
+  async getAllPlayerStats(seriesId?: number): Promise<(PlayerStats & { player: Player })[]> {
+    if (seriesId) {
+      return await db.select({
+        id: playerStats.id,
+        playerId: playerStats.playerId,
+        seriesId: playerStats.seriesId,
+        matchesPlayed: playerStats.matchesPlayed,
+        totalRuns: playerStats.totalRuns,
+        totalBalls: playerStats.totalBalls,
+        totalWickets: playerStats.totalWickets,
+        totalCatches: playerStats.totalCatches,
+        totalWins: playerStats.totalWins,
+        seriesWins: playerStats.seriesWins,
+        winsAsCaptain: playerStats.winsAsCaptain,
+        highestScore: playerStats.highestScore,
+        ballsBowled: playerStats.ballsBowled,
+        runsConceded: playerStats.runsConceded,
+        player: players,
+      })
+      .from(playerStats)
+      .innerJoin(players, eq(playerStats.playerId, players.id))
+      .where(eq(playerStats.seriesId, seriesId));
+    } else {
+      return await db.select({
+        id: playerStats.id,
+        playerId: playerStats.playerId,
+        seriesId: playerStats.seriesId,
+        matchesPlayed: playerStats.matchesPlayed,
+        totalRuns: playerStats.totalRuns,
+        totalBalls: playerStats.totalBalls,
+        totalWickets: playerStats.totalWickets,
+        totalCatches: playerStats.totalCatches,
+        totalWins: playerStats.totalWins,
+        seriesWins: playerStats.seriesWins,
+        winsAsCaptain: playerStats.winsAsCaptain,
+        highestScore: playerStats.highestScore,
+        ballsBowled: playerStats.ballsBowled,
+        runsConceded: playerStats.runsConceded,
+        player: players,
+      })
+      .from(playerStats)
+      .innerJoin(players, eq(playerStats.playerId, players.id));
     }
   }
 

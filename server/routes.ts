@@ -257,6 +257,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const ballData = insertBallSchema.parse(req.body);
       const ball = await storage.createBall(ballData);
+      
+      // Update player stats in real-time if we have the required data
+      if (ballData.strikerId && ballData.bowlerId && req.body.seriesId) {
+        await storage.updatePlayerStatsFromBall({
+          strikerId: ballData.strikerId,
+          nonStrikerId: ballData.nonStrikerId,
+          bowlerId: ballData.bowlerId,
+          runs: ballData.runs || 0,
+          isWicket: ballData.isWicket || false,
+          wicketPlayerId: ballData.wicketPlayerId,
+          fielderId: ballData.fielderId,
+          seriesId: req.body.seriesId,
+        });
+      }
+      
       res.json(ball);
     } catch (error) {
       res.status(400).json({ error: "Invalid ball data" });
@@ -283,6 +298,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true });
     } catch (error) {
       res.status(400).json({ error: "Failed to update player stats" });
+    }
+  });
+
+  // Get all player stats for a series
+  app.get("/api/series/:id/stats", async (req, res) => {
+    try {
+      const seriesId = parseInt(req.params.id);
+      const stats = await storage.getAllPlayerStats(seriesId);
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch series stats" });
+    }
+  });
+
+  // Update stats from ball data (manual endpoint for testing)
+  app.post("/api/stats/update-from-ball", async (req, res) => {
+    try {
+      await storage.updatePlayerStatsFromBall(req.body);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(400).json({ error: "Failed to update stats from ball data" });
     }
   });
 

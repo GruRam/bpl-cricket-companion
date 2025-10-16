@@ -174,6 +174,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(400).json({ error: "Failed to update match" });
     }
   });
+  
+  app.patch("/api/matches/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updates = insertMatchSchema.partial().parse(req.body);
+      const match = await storage.updateMatch(id, updates);
+      
+      // If match is completed and has a winner, increment team wins
+      if (updates.isCompleted && updates.winningTeamId) {
+        const winningTeamId = updates.winningTeamId;
+        const team = await storage.getTeamsBySeries(match.seriesId)
+          .then(teams => teams.find(t => t.id === winningTeamId));
+        
+        if (team) {
+          await storage.updateTeam(winningTeamId, { wins: (team.wins || 0) + 1 });
+        }
+      }
+      
+      res.json(match);
+    } catch (error) {
+      res.status(400).json({ error: "Failed to update match" });
+    }
+  });
 
   app.get("/api/matches/:id/players", async (req, res) => {
     try {

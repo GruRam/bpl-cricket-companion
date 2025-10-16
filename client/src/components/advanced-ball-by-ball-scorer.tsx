@@ -57,11 +57,14 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
   const [overBalls, setOverBalls] = useState<CompletedBall[]>(savedState?.overBalls || []);
   const [allBalls, setAllBalls] = useState<CompletedBall[]>(savedState?.allBalls || []);
   const [ballPosition, setBallPosition] = useState(savedState?.ballPosition || 1); // Position in over for display
+  const [previousBowler, setPreviousBowler] = useState(savedState?.previousBowler || null);
   const [needsBowlerChange, setNeedsBowlerChange] = useState(savedState?.needsBowlerChange || false);
   const [needsBatsmanChange, setNeedsBatsmanChange] = useState(savedState?.needsBatsmanChange || false);
+  const [needsInningsSetup, setNeedsInningsSetup] = useState(savedState?.needsInningsSetup || false);
   const [singleBattingMode, setSingleBattingMode] = useState(savedState?.singleBattingMode || false);
   const [isInningsComplete, setIsInningsComplete] = useState(savedState?.isInningsComplete || false);
   const [isMatchComplete, setIsMatchComplete] = useState(savedState?.isMatchComplete || false);
+  const [matchWinner, setMatchWinner] = useState<{ teamName: string; margin: string } | null>(savedState?.matchWinner || null);
   const [showInningsBreak, setShowInningsBreak] = useState(savedState?.showInningsBreak || false);
   const [firstInningsScore, setFirstInningsScore] = useState<{ runs: number; wickets: number; overs: number; balls: number } | null>(savedState?.firstInningsScore || null);
   const [pendingWicketDetails, setPendingWicketDetails] = useState<{
@@ -105,15 +108,18 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
       striker,
       nonStriker,
       bowler,
+      previousBowler,
       dismissedPlayers,
       isInningsComplete,
       isMatchComplete,
+      matchWinner,
       showInningsBreak,
       firstInningsScore,
       allBalls,
       overBalls,
       needsBowlerChange,
       needsBatsmanChange,
+      needsInningsSetup,
       singleBattingMode,
       savedAt: new Date().toISOString()
     };
@@ -473,6 +479,9 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
         setBallPosition(1);
         setOverBalls([]);
         
+        // Save previous bowler so they can't bowl consecutive overs
+        setPreviousBowler(bowler);
+        
         // Check if innings is complete after this over
         if (currentOver >= match.oversPerSide) {
           setIsInningsComplete(true);
@@ -482,6 +491,8 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
             setFirstInningsScore({ ...totalScore });
             setShowInningsBreak(true);
           } else {
+            // Calculate winner and margin
+            calculateMatchWinner();
             setIsMatchComplete(true);
             // Clear saved state when match is complete
             clearSavedState();
@@ -550,6 +561,67 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
     });
   };
 
+  // Calculate match winner
+  const calculateMatchWinner = () => {
+    if (!firstInningsScore) return;
+    
+    const team1Name = match.team1.id === match.battingTeam.id ? match.team2.name : match.team1.name;
+    const team2Name = match.team1.id === match.battingTeam.id ? match.team1.name : match.team2.name;
+    
+    const firstInningsRuns = firstInningsScore.runs;
+    const secondInningsRuns = totalScore.runs;
+    
+    let winner: { teamName: string; margin: string };
+    
+    if (secondInningsRuns > firstInningsRuns) {
+      // Team batting second wins
+      const wicketsRemaining = 10 - totalScore.wickets;
+      winner = {
+        teamName: team2Name,
+        margin: `by ${wicketsRemaining} wickets`
+      };
+    } else if (secondInningsRuns < firstInningsRuns) {
+      // Team batting first wins
+      const runsMargin = firstInningsRuns - secondInningsRuns;
+      winner = {
+        teamName: team1Name,
+        margin: `by ${runsMargin} runs`
+      };
+    } else {
+      // Tie
+      winner = {
+        teamName: "Match Tied",
+        margin: ""
+      };
+    }
+    
+    setMatchWinner(winner);
+    
+    // Update match in backend with winner
+    const winningTeamId = winner.teamName === team1Name ? 
+      (match.team1.id === match.battingTeam.id ? match.team2.id : match.team1.id) :
+      (match.team1.id === match.battingTeam.id ? match.team1.id : match.team2.id);
+    
+    if (winner.teamName !== "Match Tied") {
+      updateMatchMutation.mutate({
+        matchId: match.id,
+        isCompleted: true,
+        winningTeamId
+      });
+    }
+  };
+  
+  // Mutation to update match completion
+  const updateMatchMutation = useMutation({
+    mutationFn: async ({ matchId, isCompleted, winningTeamId }: { matchId: number; isCompleted: boolean; winningTeamId: number }) => {
+      return await apiRequest(`/api/matches/${matchId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ isCompleted, winningTeamId }),
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+  });
+
   // Start second innings
   const startSecondInnings = () => {
     // Swap batting and bowling teams
@@ -570,6 +642,7 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
     setTotalScore({ runs: 0, wickets: 0, overs: 0, balls: 0 });
     setRunRate(0);
     setDismissedPlayers([]);
+    setPreviousBowler(null); // Reset previous bowler for new innings
     
     // Clear player selections (they need to be reselected)
     setStriker({ id: 0, name: "" });
@@ -580,7 +653,8 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
     setIsInningsComplete(false);
     setShowInningsBreak(false);
     setNeedsBowlerChange(false);
-    setNeedsBatsmanChange(true); // Force player selection
+    setNeedsBatsmanChange(false);
+    setNeedsInningsSetup(true); // Special flag for innings setup
     setSingleBattingMode(false);
   };
 
@@ -745,6 +819,7 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
                     .filter(player => 
                       player.id !== striker?.id && 
                       player.id !== nonStriker?.id &&
+                      player.id !== previousBowler?.id &&
                       !match.unavailablePlayers?.includes(player.id)
                     )
                     .map((player) => (
@@ -783,7 +858,7 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
       )}
 
       {/* Match Complete Alert */}
-      {isMatchComplete && (
+      {isMatchComplete && matchWinner && (
         <Card className="border-green-200 bg-green-50 dark:bg-green-900/20">
           <CardContent className="pt-6">
             <div className="text-center space-y-4">
@@ -791,8 +866,11 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
                 <Trophy className="h-6 w-6" />
                 <span className="font-bold text-lg">Match Complete!</span>
               </div>
+              <div className="text-lg font-bold text-green-700 dark:text-green-300">
+                {matchWinner.teamName} {matchWinner.margin !== "" ? "wins " + matchWinner.margin : ""}
+              </div>
               <div className="text-sm text-green-600 dark:text-green-400">
-                Final scores: Both innings finished
+                Final Score: {match.battingTeam.name} {totalScore.runs}/{totalScore.wickets} vs {firstInningsScore ? `${firstInningsScore.runs}/${firstInningsScore.wickets}` : ''}
               </div>
             </div>
           </CardContent>
@@ -811,8 +889,30 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
         </Card>
       )}
 
+      {/* Innings Setup Alert - For second innings */}
+      {needsInningsSetup && (
+        <Card className="border-blue-200 bg-blue-50 dark:bg-blue-900/20">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
+                <AlertCircle className="h-5 w-5" />
+                <span className="font-medium">Second innings starting! Please select striker, non-striker, and bowler</span>
+              </div>
+              <Button
+                onClick={() => setNeedsInningsSetup(false)}
+                variant="outline"
+                size="sm"
+                className="bg-green-600 text-white hover:bg-green-700 border-green-600"
+              >
+                Done
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      
       {/* Bowler Change Alert - Right after Current Players for visibility */}
-      {needsBowlerChange && !isInningsComplete && (
+      {needsBowlerChange && !isInningsComplete && !needsInningsSetup && (
         <Card className="border-red-200 bg-red-50 dark:bg-red-900/20">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
@@ -834,7 +934,7 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
       )}
 
       {/* New Batsman Alert - Right after Current Players for visibility */}
-      {needsBatsmanChange && (
+      {needsBatsmanChange && !needsInningsSetup && (
         <Card className="border-red-200 bg-red-50 dark:bg-red-900/20">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
@@ -856,13 +956,15 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
       )}
 
       {/* Status Indicators */}
-      {(needsBowlerChange || needsBatsmanChange) && (
+      {(needsBowlerChange || needsBatsmanChange || needsInningsSetup) && !isInningsComplete && (
         <Card className="border-amber-200 bg-amber-50 dark:bg-amber-900/20">
           <CardContent className="pt-6">
             <div className="flex items-start gap-2 text-amber-700 dark:text-amber-300">
               <AlertCircle className="h-5 w-5 mt-0.5 flex-shrink-0" />
               <div className="font-medium">
-                {needsBowlerChange && needsBatsmanChange ? (
+                {needsInningsSetup ? (
+                  "Setup required for second innings"
+                ) : needsBowlerChange && needsBatsmanChange ? (
                   <div className="space-y-1">
                     <div>Required actions:</div>
                     <div className="text-sm">• Change bowler (over completed)</div>
@@ -921,9 +1023,9 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
                   <Button
                     key={button.label}
                     className={`h-12 font-bold ${button.color}`}
-                    disabled={needsBowlerChange || needsBatsmanChange || isInningsComplete || isMatchComplete}
+                    disabled={needsBowlerChange || needsBatsmanChange || needsInningsSetup || isInningsComplete || isMatchComplete}
                     onClick={() => {
-                      if (needsBowlerChange || needsBatsmanChange || isInningsComplete || isMatchComplete) return;
+                      if (needsBowlerChange || needsBatsmanChange || needsInningsSetup || isInningsComplete || isMatchComplete) return;
                       if (button.label === "W") {
                         setShowWicketModal(true);
                       } else if (button.label === "NB") {

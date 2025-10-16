@@ -43,11 +43,13 @@ export interface SavedMatchState {
   striker: { id: number; name: string };
   nonStriker: { id: number; name: string };
   bowler: { id: number; name: string };
+  previousBowler?: { id: number; name: string } | null;
   dismissedPlayers: number[];
   
   // Match state
   isInningsComplete: boolean;
   isMatchComplete: boolean;
+  matchWinner?: { teamName: string; margin: string } | null;
   showInningsBreak: boolean;
   firstInningsScore: { runs: number; wickets: number; overs: number; balls: number } | null;
   
@@ -58,6 +60,7 @@ export interface SavedMatchState {
   // Flags
   needsBowlerChange: boolean;
   needsBatsmanChange: boolean;
+  needsInningsSetup?: boolean;
   singleBattingMode: boolean;
   
   // Timestamp

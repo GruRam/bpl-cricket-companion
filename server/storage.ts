@@ -31,6 +31,7 @@ export interface IStorage {
   
   // Matches
   getMatchesBySeries(seriesId: number): Promise<Match[]>;
+  getMatch(id: number): Promise<Match | null>;
   createMatch(match: InsertMatch): Promise<Match>;
   updateMatch(id: number, updates: Partial<InsertMatch>): Promise<Match>;
   
@@ -142,6 +143,11 @@ export class DatabaseStorage implements IStorage {
 
   async getMatchesBySeries(seriesId: number): Promise<Match[]> {
     return await db.select().from(matches).where(eq(matches.seriesId, seriesId)).orderBy(desc(matches.matchDate));
+  }
+  
+  async getMatch(id: number): Promise<Match | null> {
+    const [match] = await db.select().from(matches).where(eq(matches.id, id)).limit(1);
+    return match || null;
   }
 
   async createMatch(match: InsertMatch): Promise<Match> {

@@ -178,11 +178,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/matches/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      
+      // Get the current match state before updating
+      const currentMatchData = await storage.getMatch(id);
+      
       const updates = insertMatchSchema.partial().parse(req.body);
       const match = await storage.updateMatch(id, updates);
       
-      // If match is completed and has a winner, increment team wins
-      if (updates.isCompleted && updates.winningTeamId) {
+      // If match is becoming completed (wasn't completed before) and has a winner, increment team wins
+      if (updates.isCompleted && updates.winningTeamId && !currentMatchData?.isCompleted) {
         const winningTeamId = updates.winningTeamId;
         const team = await storage.getTeamsBySeries(match.seriesId)
           .then(teams => teams.find(t => t.id === winningTeamId));

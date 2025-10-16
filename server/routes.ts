@@ -259,15 +259,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const ball = await storage.createBall(ballData);
       
       // Update player stats in real-time if we have the required data
-      if (ballData.strikerId && ballData.bowlerId && req.body.seriesId) {
+      if (ballData.strikerId && ballData.nonStrikerId && ballData.bowlerId && req.body.seriesId) {
         await storage.updatePlayerStatsFromBall({
           strikerId: ballData.strikerId,
           nonStrikerId: ballData.nonStrikerId,
           bowlerId: ballData.bowlerId,
           runs: ballData.runs || 0,
           isWicket: ballData.isWicket || false,
-          wicketPlayerId: ballData.wicketPlayerId,
-          fielderId: ballData.fielderId,
+          wicketPlayerId: ballData.wicketPlayerId ?? undefined,
+          fielderId: ballData.fielderId ?? undefined,
           seriesId: req.body.seriesId,
         });
       }

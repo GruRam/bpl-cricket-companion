@@ -14,13 +14,16 @@ function Router() {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      <Switch>
-        <Route path="/" component={Home} />
-        <Route path="/players" component={Players} />
-        <Route path="/match" component={Match} />
-        <Route path="/stats" component={Stats} />
-        <Route component={() => <div className="p-8 text-center">Page not found</div>} />
-      </Switch>
+      {/* Add padding bottom for mobile navigation */}
+      <div className="pb-16 md:pb-0">
+        <Switch>
+          <Route path="/" component={Home} />
+          <Route path="/players" component={Players} />
+          <Route path="/match" component={Match} />
+          <Route path="/stats" component={Stats} />
+          <Route component={() => <div className="p-8 text-center">Page not found</div>} />
+        </Switch>
+      </div>
     </div>
   );
 }

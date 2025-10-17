@@ -1344,22 +1344,58 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
                     <tbody>
                       {(() => {
                         const batsmanStats = {};
+                        const dismissalInfo = {};
+                        
                         firstInningsBalls.forEach(ball => {
                           const batsman = ball.striker;
                           if (!batsmanStats[batsman]) {
                             batsmanStats[batsman] = { runs: 0, balls: 0, fours: 0, sixes: 0 };
                           }
+                          
+                          // Track dismissal information
+                          if (ball.entry.isWicket) {
+                            const wicketType = ball.entry.wicketType || '';
+                            const bowlerName = ball.bowler;
+                            const fielderPlayer = ball.entry.fielderId ? 
+                              [...battingTeamPlayers, ...bowlingTeamPlayers].find(p => p.id === ball.entry.fielderId) : null;
+                            const fielderName = fielderPlayer?.name || '';
+                            
+                            const batsmanOut = ball.striker;
+                            
+                            let dismissalText = '';
+                            if (wicketType === 'Bowled') {
+                              dismissalText = `b. ${bowlerName}`;
+                            } else if (wicketType === 'Caught') {
+                              dismissalText = fielderName ? `c. ${fielderName} b. ${bowlerName}` : `c & b ${bowlerName}`;
+                            } else if (wicketType === 'Run Out') {
+                              dismissalText = fielderName ? `run out (${fielderName})` : 'run out';
+                            } else if (wicketType === 'Stumped') {
+                              dismissalText = `st. ${fielderName} b. ${bowlerName}`;
+                            } else if (wicketType === 'Hit Wicket') {
+                              dismissalText = `hit wicket b. ${bowlerName}`;
+                            } else if (wicketType === 'Boundary Out') {
+                              dismissalText = 'boundary out';
+                            } else {
+                              dismissalText = wicketType.toLowerCase();
+                            }
+                            
+                            dismissalInfo[batsmanOut] = dismissalText;
+                          }
+                          
                           if (!ball.entry.isWide && !ball.entry.isNoBall) batsmanStats[batsman].balls++;
                           batsmanStats[batsman].runs += ball.entry.runs;
                           if (ball.entry.runs === 4) batsmanStats[batsman].fours++;
                           if (ball.entry.runs === 6) batsmanStats[batsman].sixes++;
                         });
+                        
                         return Object.entries(batsmanStats).map(([batsman, stats]) => {
                           const sr = stats.balls > 0 ? ((stats.runs / stats.balls) * 100).toFixed(1) : '0.0';
+                          const howOut = dismissalInfo[batsman] || 'not out';
+                          
                           return (
                             <tr key={batsman} className="border-b">
                               <td className="py-2 px-2 font-medium">{batsman}</td>
-                              <td className="py-2 px-2 text-muted-foreground">not out</td>
+                              <td className="py-2 px-2 text-muted-foreground text-xs">{howOut}</td>
                               <td className="py-2 px-1 text-right font-semibold">{stats.runs}</td>
                               <td className="py-2 px-1 text-right">{stats.balls}</td>
                               <td className="py-2 px-1 text-right">{stats.fours}</td>
@@ -1458,6 +1494,7 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
                     {(() => {
                       // Calculate batting statistics from allBalls
                       const batsmanStats = {};
+                      const dismissalInfo = {};
                       
                       allBalls.forEach(ball => {
                         const batsman = ball.striker;
@@ -1471,6 +1508,38 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
                             isOnStrike: batsman === striker?.name,
                             isNonStriker: batsman === nonStriker?.name
                           };
+                        }
+                        
+                        // Track dismissal information
+                        if (ball.entry.isWicket) {
+                          const wicketType = ball.entry.wicketType || '';
+                          const bowlerName = ball.bowler;
+                          const fielderPlayer = ball.entry.fielderId ? 
+                            [...battingTeamPlayers, ...bowlingTeamPlayers].find(p => p.id === ball.entry.fielderId) : null;
+                          const fielderName = fielderPlayer?.name || '';
+                          
+                          // Determine which batsman was out
+                          const batsmanOut = ball.striker; // Assuming striker is always the one out for now
+                          
+                          // Format dismissal text professionally
+                          let dismissalText = '';
+                          if (wicketType === 'Bowled') {
+                            dismissalText = `b. ${bowlerName}`;
+                          } else if (wicketType === 'Caught') {
+                            dismissalText = fielderName ? `c. ${fielderName} b. ${bowlerName}` : `c & b ${bowlerName}`;
+                          } else if (wicketType === 'Run Out') {
+                            dismissalText = fielderName ? `run out (${fielderName})` : 'run out';
+                          } else if (wicketType === 'Stumped') {
+                            dismissalText = `st. ${fielderName} b. ${bowlerName}`;
+                          } else if (wicketType === 'Hit Wicket') {
+                            dismissalText = `hit wicket b. ${bowlerName}`;
+                          } else if (wicketType === 'Boundary Out') {
+                            dismissalText = 'boundary out';
+                          } else {
+                            dismissalText = wicketType.toLowerCase();
+                          }
+                          
+                          dismissalInfo[batsmanOut] = dismissalText;
                         }
                         
                         // Only count valid balls for balls faced
@@ -1488,14 +1557,23 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
 
                       return Object.entries(batsmanStats).map(([batsman, stats]) => {
                         const strikeRate = stats.balls > 0 ? ((stats.runs / stats.balls) * 100).toFixed(1) : '0.0';
-                        const status = stats.isOut ? 'out' : 
-                                     stats.isOnStrike ? 'not out *' : 
-                                     stats.isNonStriker ? 'not out' : 'not out';
+                        
+                        // Determine how out status
+                        let howOut = '';
+                        if (dismissalInfo[batsman]) {
+                          howOut = dismissalInfo[batsman];
+                        } else if (stats.isOut) {
+                          howOut = 'out';
+                        } else if (stats.isOnStrike) {
+                          howOut = 'not out *';
+                        } else {
+                          howOut = 'not out';
+                        }
                         
                         return (
                           <tr key={batsman} className="border-b">
                             <td className="py-2 px-2 font-medium">{batsman}</td>
-                            <td className="py-2 px-2 text-muted-foreground">{status}</td>
+                            <td className="py-2 px-2 text-muted-foreground text-xs">{howOut}</td>
                             <td className="py-2 px-1 text-right font-semibold">{stats.runs}</td>
                             <td className="py-2 px-1 text-right">{stats.balls}</td>
                             <td className="py-2 px-1 text-right">{stats.fours}</td>

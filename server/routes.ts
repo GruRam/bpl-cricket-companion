@@ -185,14 +185,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updates = insertMatchSchema.partial().parse(req.body);
       const match = await storage.updateMatch(id, updates);
       
-      // If match is becoming completed (wasn't completed before) and has a winner, increment team wins
-      if (updates.isCompleted && updates.winningTeamId && !currentMatchData?.isCompleted) {
-        const winningTeamId = updates.winningTeamId;
-        const team = await storage.getTeamsBySeries(match.seriesId)
-          .then(teams => teams.find(t => t.id === winningTeamId));
+      // If match is becoming completed (wasn't completed before), update team and player stats
+      if (updates.isCompleted && !currentMatchData?.isCompleted) {
+        // Increment team wins if there's a winner
+        if (updates.winningTeamId) {
+          const winningTeamId = updates.winningTeamId;
+          const teams = await storage.getTeamsBySeries(match.seriesId);
+          const team = teams.find(t => t.id === winningTeamId);
+          
+          if (team) {
+            await storage.updateTeam(winningTeamId, { wins: (team.wins || 0) + 1 });
+          }
+        }
         
-        if (team) {
-          await storage.updateTeam(winningTeamId, { wins: (team.wins || 0) + 1 });
+        // Update player stats for all match participants
+        const matchPlayers = await storage.getMatchPlayers(id);
+        for (const mp of matchPlayers) {
+          const playerStats = await storage.getPlayerStats(mp.playerId, match.seriesId);
+          const currentStats = playerStats.length > 0 ? playerStats[0] : null;
+          
+          if (currentStats) {
+            // Increment matches played
+            const newMatchesPlayed = (currentStats.matchesPlayed || 0) + 1;
+            
+            // Increment total wins if player's team won
+            const newTotalWins = mp.teamId === updates.winningTeamId 
+              ? (currentStats.totalWins || 0) + 1 
+              : currentStats.totalWins;
+            
+            await storage.updatePlayerStats(mp.playerId, match.seriesId, {
+              matchesPlayed: newMatchesPlayed,
+              totalWins: newTotalWins,
+            });
+          } else {
+            // Create stats if they don't exist
+            await storage.updatePlayerStats(mp.playerId, match.seriesId, {
+              matchesPlayed: 1,
+              totalWins: mp.teamId === updates.winningTeamId ? 1 : 0,
+            });
+          }
         }
       }
       

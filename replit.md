@@ -240,15 +240,31 @@ Changelog:
     - Both teams' stats displayed correctly with proper team names
     - Separated batting and bowling stats by innings
   
-  * **CRITICAL BUG FIX - Database Integration for Stats**:
-    - Identified that balls were only saved to localStorage, not database
-    - Implemented efficient database integration:
-      * Created `saveBallWithContext` method in storage that auto-creates innings/overs
-      * Added `/api/balls/save-with-context` endpoint for one-call ball saving
-      * Uses fire-and-forget pattern - doesn't block UI while saving
-      * Automatically updates player stats after each ball
-    - Frontend now calls new endpoint with complete ball data
-    - Ball saving includes: matchId, seriesId, innings, over, all player IDs, runs, wickets, extras
-    - Stats now properly calculate and display from persisted match data
-    - Match results now appear in series stats and history
+  * **CRITICAL BUG FIX - Complete Database Integration**:
+    - **ROOT CAUSE**: Matches were only created in frontend memory, never saved to database
+    - **IMPACT**: All ball data was orphaned, stats never calculated, match history lost
+    
+    - **Backend Enhancements**:
+      * Created `saveBallWithContext` method that auto-creates innings/overs as needed
+      * Added `/api/balls/save-with-context` endpoint for efficient one-call ball saving
+      * Enhanced match completion to update matches_played and total_wins for all players
+      * Team wins increment when match completes with winner
+    
+    - **Frontend Fixes**:
+      * Match creation now saves to database via POST /api/matches
+      * All match players added to match_players table with correct team assignments
+      * Real database match ID used (not temporary Date.now() ID)
+      * Ball-by-ball scorer saves each ball with complete context:
+        - matchId, seriesId, innings number, over number, ball number
+        - All player IDs (striker, non-striker, bowler, fielder if applicable)
+        - Runs, wickets, extras, dismissal types
+        - Team IDs for proper innings tracking
+    
+    - **Stats Now Working**:
+      * Player stats (runs, balls, wickets, catches) update after each ball
+      * Match completion increments matches_played for all participants
+      * Winning team players get total_wins incremented
+      * Team wins tracked and displayed in series progress
+      * Match history appears in recent matches
+      * Stats page displays real-time leaderboards
 ```

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, ArrowLeft, Users, Play, Settings, Shuffle, UserX } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import type { Player, Team } from "@shared/schema";
 import type { CurrentMatch } from "@/lib/types";
 
@@ -103,6 +104,28 @@ export default function MatchSetupModal({ isOpen, onClose, onMatchStart, activeS
     return false;
   };
 
+  // Mutation to create match in database
+  const createMatchMutation = useMutation({
+    mutationFn: async (matchData: any) => {
+      return await apiRequest("/api/matches", {
+        method: "POST",
+        body: JSON.stringify(matchData),
+        headers: { "Content-Type": "application/json" },
+      });
+    },
+  });
+
+  // Mutation to add player to match
+  const addPlayerToMatchMutation = useMutation({
+    mutationFn: async ({ matchId, playerId, teamId }: { matchId: number; playerId: number; teamId: number }) => {
+      return await apiRequest(`/api/matches/${matchId}/players`, {
+        method: "POST",
+        body: JSON.stringify({ playerId, teamId }),
+        headers: { "Content-Type": "application/json" },
+      });
+    },
+  });
+
   const handleNext = () => {
     if (canProceed()) {
       setCurrentStep(prev => Math.min(prev + 1, 2));
@@ -113,7 +136,7 @@ export default function MatchSetupModal({ isOpen, onClose, onMatchStart, activeS
     setCurrentStep(prev => Math.max(prev - 1, 1));
   };
 
-  const handleStartMatch = () => {
+  const handleStartMatch = async () => {
     if (!canProceed()) return;
 
     const battingTeam = firstBattingTeam === "team1" ? 
@@ -123,10 +146,6 @@ export default function MatchSetupModal({ isOpen, onClose, onMatchStart, activeS
     const bowlingTeam = firstBattingTeam === "team1" ? 
       { id: seriesTeams![1].id, name: team2Name } : 
       { id: seriesTeams![0].id, name: team1Name };
-
-    // Get batting team players for default selections
-    const battingPlayers = firstBattingTeam === "team1" ? getActiveTeam1Players() : getActiveTeam2Players();
-    const bowlingPlayers = firstBattingTeam === "team1" ? getActiveTeam2Players() : getActiveTeam1Players();
 
     // Get unavailable player IDs
     const unavailablePlayers = matchPlayers
@@ -138,26 +157,82 @@ export default function MatchSetupModal({ isOpen, onClose, onMatchStart, activeS
       .filter(mp => mp.status === "common")
       .map(mp => ({ id: mp.player.id, name: mp.player.name }));
 
-    const match: CurrentMatch = {
-      id: Date.now(),
-      team1: { id: seriesTeams![0].id, name: team1Name },
-      team2: { id: seriesTeams![1].id, name: team2Name },
-      currentInnings: 1,
-      battingTeam,
-      bowlingTeam,
-      score: { runs: 0, wickets: 0, overs: 0, balls: 0 },
-      currentOver: 1,
-      currentBall: 1,
-      striker: { id: 0, name: "" },
-      nonStriker: { id: 0, name: "" },
-      bowler: { id: 0, name: "" },
-      unavailablePlayers,
-      commonPlayers,
-      oversPerSide,
-    };
+    try {
+      // Create match in database
+      const createdMatch = await createMatchMutation.mutateAsync({
+        seriesId: activeSeries.id,
+        team1Id: seriesTeams![0].id,
+        team2Id: seriesTeams![1].id,
+        firstBattingTeamId: battingTeam.id,
+        isCompleted: false,
+      });
 
-    onMatchStart(match);
-    onClose();
+      // Add all active players to the match
+      const team1ActivePlayers = getActiveTeam1Players();
+      const team2ActivePlayers = getActiveTeam2Players();
+      
+      // Add team1 players (excluding common players since they're added separately)
+      for (const mp of team1ActivePlayers) {
+        if (mp.status !== "common") {
+          await addPlayerToMatchMutation.mutateAsync({
+            matchId: createdMatch.id,
+            playerId: mp.player.id,
+            teamId: seriesTeams![0].id,
+          });
+        }
+      }
+
+      // Add team2 players (excluding common players)
+      for (const mp of team2ActivePlayers) {
+        if (mp.status !== "common") {
+          await addPlayerToMatchMutation.mutateAsync({
+            matchId: createdMatch.id,
+            playerId: mp.player.id,
+            teamId: seriesTeams![1].id,
+          });
+        }
+      }
+
+      // Add common players to both teams
+      for (const mp of matchPlayers.filter(mp => mp.status === "common")) {
+        // Add to original team
+        const originalTeamId = mp.originalTeam === "team1" ? seriesTeams![0].id : seriesTeams![1].id;
+        await addPlayerToMatchMutation.mutateAsync({
+          matchId: createdMatch.id,
+          playerId: mp.player.id,
+          teamId: originalTeamId,
+        });
+      }
+
+      // Create CurrentMatch object with real database ID
+      const match: CurrentMatch = {
+        id: createdMatch.id,
+        team1: { id: seriesTeams![0].id, name: team1Name },
+        team2: { id: seriesTeams![1].id, name: team2Name },
+        currentInnings: 1,
+        battingTeam,
+        bowlingTeam,
+        score: { runs: 0, wickets: 0, overs: 0, balls: 0 },
+        currentOver: 1,
+        currentBall: 1,
+        striker: { id: 0, name: "" },
+        nonStriker: { id: 0, name: "" },
+        bowler: { id: 0, name: "" },
+        unavailablePlayers,
+        commonPlayers,
+        oversPerSide,
+      };
+
+      onMatchStart(match);
+      onClose();
+    } catch (error) {
+      console.error("Failed to create match:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create match. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (

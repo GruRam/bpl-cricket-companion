@@ -349,6 +349,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Save ball with auto-creation of innings/overs and stats update
+  app.post("/api/balls/save-with-context", async (req, res) => {
+    try {
+      const ball = await storage.saveBallWithContext(req.body);
+      res.json(ball);
+    } catch (error) {
+      console.error("Error saving ball:", error);
+      res.status(400).json({ error: "Failed to save ball data" });
+    }
+  });
+
   app.get("/api/series/:id/recent-matches", async (req, res) => {
     try {
       const seriesId = parseInt(req.params.id);

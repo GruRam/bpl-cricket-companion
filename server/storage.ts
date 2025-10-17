@@ -68,6 +68,28 @@ export interface IStorage {
   }): Promise<void>;
   getAllPlayerStats(seriesId?: number): Promise<(PlayerStats & { player: Player })[]>;
   
+  // Ball with auto-creation
+  saveBallWithContext(ballData: {
+    matchId: number;
+    seriesId: number;
+    inningsNumber: number;
+    overNumber: number;
+    ballNumber: number;
+    strikerId: number;
+    nonStrikerId: number;
+    bowlerId: number;
+    runs: number;
+    isWide: boolean;
+    isNoBall: boolean;
+    isWicket: boolean;
+    wicketType?: string;
+    wicketPlayerId?: number;
+    fielderId?: number;
+    extras: number;
+    battingTeamId: number;
+    bowlingTeamId: number;
+  }): Promise<Ball>;
+  
   // Dashboard
   getSeriesProgress(seriesId: number): Promise<{ team1Wins: number; team2Wins: number; team1: Team; team2: Team }>;
   getRecentMatches(seriesId: number, limit?: number): Promise<Match[]>;
@@ -366,6 +388,110 @@ export class DatabaseStorage implements IStorage {
       .where(eq(matches.seriesId, seriesId))
       .orderBy(desc(matches.matchDate))
       .limit(limit);
+  }
+
+  async saveBallWithContext(ballData: {
+    matchId: number;
+    seriesId: number;
+    inningsNumber: number;
+    overNumber: number;
+    ballNumber: number;
+    strikerId: number;
+    nonStrikerId: number;
+    bowlerId: number;
+    runs: number;
+    isWide: boolean;
+    isNoBall: boolean;
+    isWicket: boolean;
+    wicketType?: string;
+    wicketPlayerId?: number;
+    fielderId?: number;
+    extras: number;
+    battingTeamId: number;
+    bowlingTeamId: number;
+  }): Promise<Ball> {
+    // Get or create innings
+    let inningsRecord = await db.select().from(innings)
+      .where(and(
+        eq(innings.matchId, ballData.matchId),
+        eq(innings.inningsNumber, ballData.inningsNumber)
+      ))
+      .limit(1);
+
+    let inningsId: number;
+    if (inningsRecord.length === 0) {
+      // Create new innings
+      const [newInnings] = await db.insert(innings).values({
+        matchId: ballData.matchId,
+        battingTeamId: ballData.battingTeamId,
+        bowlingTeamId: ballData.bowlingTeamId,
+        inningsNumber: ballData.inningsNumber,
+        totalRuns: 0,
+        totalWickets: 0,
+        totalOvers: 0,
+        totalBalls: 0,
+        isCompleted: false,
+      }).returning();
+      inningsId = newInnings.id;
+    } else {
+      inningsId = inningsRecord[0].id;
+    }
+
+    // Get or create over
+    let overRecord = await db.select().from(overs)
+      .where(and(
+        eq(overs.inningsId, inningsId),
+        eq(overs.overNumber, ballData.overNumber)
+      ))
+      .limit(1);
+
+    let overId: number;
+    if (overRecord.length === 0) {
+      // Create new over
+      const [newOver] = await db.insert(overs).values({
+        inningsId,
+        overNumber: ballData.overNumber,
+        bowlerId: ballData.bowlerId,
+        runs: 0,
+        wickets: 0,
+        isCompleted: false,
+      }).returning();
+      overId = newOver.id;
+    } else {
+      overId = overRecord[0].id;
+    }
+
+    // Create ball
+    const [ball] = await db.insert(balls).values({
+      overId,
+      inningsId,
+      ballNumber: ballData.ballNumber,
+      bowlerId: ballData.bowlerId,
+      strikerId: ballData.strikerId,
+      nonStrikerId: ballData.nonStrikerId,
+      runs: ballData.runs,
+      isWide: ballData.isWide,
+      isNoBall: ballData.isNoBall,
+      isWicket: ballData.isWicket,
+      wicketType: ballData.wicketType,
+      wicketPlayerId: ballData.wicketPlayerId,
+      fielderId: ballData.fielderId,
+      extras: ballData.extras,
+    }).returning();
+
+    // Update player stats
+    await this.updatePlayerStatsFromBall({
+      strikerId: ballData.strikerId,
+      nonStrikerId: ballData.nonStrikerId,
+      bowlerId: ballData.bowlerId,
+      runs: ballData.runs,
+      isWicket: ballData.isWicket,
+      wicketPlayerId: ballData.wicketPlayerId,
+      fielderId: ballData.fielderId,
+      seriesId: ballData.seriesId,
+    });
+
+    return ball;
   }
 }
 

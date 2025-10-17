@@ -633,11 +633,8 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
   // Mutation to update match completion
   const updateMatchMutation = useMutation({
     mutationFn: async ({ matchId, isCompleted, winningTeamId }: { matchId: number; isCompleted: boolean; winningTeamId: number }) => {
-      return await apiRequest(`/api/matches/${matchId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ isCompleted, winningTeamId }),
-        headers: { 'Content-Type': 'application/json' }
-      });
+      const response = await apiRequest('PATCH', `/api/matches/${matchId}`, { isCompleted, winningTeamId });
+      return await response.json();
     }
   });
 

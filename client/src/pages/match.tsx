@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import AdvancedBallByBallScorer from "@/components/advanced-ball-by-ball-scorer";
 import WicketDetailsModal from "@/components/modals/wicket-details-modal";
 import MatchSetupModal from "@/components/modals/match-setup-modal";
+import ScorecardModal from "@/components/modals/scorecard-modal";
 import type { CurrentMatch } from "@/lib/types";
 
 export default function Match() {
@@ -16,10 +17,28 @@ export default function Match() {
   const [currentMatch, setCurrentMatch] = useState<CurrentMatch | null>(null);
   const [showResumeModal, setShowResumeModal] = useState(false);
   const [savedMatchState, setSavedMatchState] = useState<any>(null);
+  const [showScorecardModal, setShowScorecardModal] = useState(false);
+  const [scorecardMatchId, setScorecardMatchId] = useState<number | null>(null);
 
   const { data: activeSeries } = useQuery({
     queryKey: ["/api/series/active"],
   });
+
+  // Query for scorecard data
+  const { data: scorecardData } = useQuery({
+    queryKey: [`/api/matches/${scorecardMatchId}/scorecard`],
+    enabled: !!scorecardMatchId,
+  });
+
+  // Check for scorecard view request
+  useEffect(() => {
+    const matchIdToView = localStorage.getItem('viewScorecardMatchId');
+    if (matchIdToView) {
+      setScorecardMatchId(parseInt(matchIdToView));
+      setShowScorecardModal(true);
+      localStorage.removeItem('viewScorecardMatchId');
+    }
+  }, []);
 
   // Check for saved match state on component mount
   useEffect(() => {
@@ -170,6 +189,17 @@ export default function Match() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {scorecardData && (
+        <ScorecardModal
+          isOpen={showScorecardModal}
+          onClose={() => {
+            setShowScorecardModal(false);
+            setScorecardMatchId(null);
+          }}
+          matchData={scorecardData}
+        />
+      )}
     </div>
   );
 }

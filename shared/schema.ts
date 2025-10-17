@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, json } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, json, unique } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -103,13 +103,17 @@ export const playerStats = pgTable("player_stats", {
   totalBalls: integer("total_balls").default(0),
   totalWickets: integer("total_wickets").default(0),
   totalCatches: integer("total_catches").default(0),
+  totalStumpings: integer("total_stumpings").default(0),
+  totalRunOuts: integer("total_run_outs").default(0),
   totalWins: integer("total_wins").default(0),
   seriesWins: integer("series_wins").default(0),
   winsAsCaptain: integer("wins_as_captain").default(0),
   highestScore: integer("highest_score").default(0),
   ballsBowled: integer("balls_bowled").default(0),
   runsConceded: integer("runs_conceded").default(0),
-});
+}, (table) => ({
+  uniquePlayerSeries: unique().on(table.playerId, table.seriesId),
+}));
 
 // Relations
 export const playersRelations = relations(players, ({ many }) => ({

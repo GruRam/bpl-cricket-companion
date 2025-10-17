@@ -260,38 +260,80 @@ export class DatabaseStorage implements IStorage {
     bowlerId: number;
     runs: number;
     isWicket: boolean;
+    wicketType?: string;
     wicketPlayerId?: number;
     fielderId?: number;
     seriesId: number;
   }): Promise<void> {
-    const { strikerId, nonStrikerId, bowlerId, runs, isWicket, wicketPlayerId, fielderId, seriesId } = ballData;
+    const { strikerId, nonStrikerId, bowlerId, runs, isWicket, wicketType, wicketPlayerId, fielderId, seriesId } = ballData;
 
-    // Get or create stats for striker
-    const strikerStats = await this.getOrCreatePlayerStats(strikerId, seriesId);
-    
-    // Update striker stats
-    await this.updatePlayerStats(strikerId, seriesId, {
-      totalRuns: (strikerStats.totalRuns || 0) + runs,
-      totalBalls: (strikerStats.totalBalls || 0) + 1,
-      highestScore: Math.max(strikerStats.highestScore || 0, runs), // This would need match context for actual highest score
-    });
-
-    // Get or create stats for bowler
-    const bowlerStats = await this.getOrCreatePlayerStats(bowlerId, seriesId);
-    
-    // Update bowler stats
-    await this.updatePlayerStats(bowlerId, seriesId, {
-      ballsBowled: (bowlerStats.ballsBowled || 0) + 1,
-      runsConceded: (bowlerStats.runsConceded || 0) + runs,
-      totalWickets: isWicket && wicketPlayerId ? (bowlerStats.totalWickets || 0) + 1 : bowlerStats.totalWickets,
-    });
-
-    // Update fielder stats for catches
-    if (isWicket && fielderId && fielderId !== bowlerId) {
-      const fielderStats = await this.getOrCreatePlayerStats(fielderId, seriesId);
-      await this.updatePlayerStats(fielderId, seriesId, {
-        totalCatches: (fielderStats.totalCatches || 0) + 1,
+    // Upsert striker stats
+    await db.insert(playerStats)
+      .values({
+        playerId: strikerId,
+        seriesId,
+        totalRuns: runs,
+        totalBalls: 1,
+        highestScore: runs,
+      })
+      .onConflictDoUpdate({
+        target: [playerStats.playerId, playerStats.seriesId],
+        set: {
+          totalRuns: sql`${playerStats.totalRuns} + ${runs}`,
+          totalBalls: sql`${playerStats.totalBalls} + 1`,
+          highestScore: sql`GREATEST(${playerStats.highestScore}, ${runs})`,
+        },
       });
+
+    // Upsert bowler stats
+    const bowlerUpdates: any = {
+      ballsBowled: sql`${playerStats.ballsBowled} + 1`,
+      runsConceded: sql`${playerStats.runsConceded} + ${runs}`,
+    };
+    
+    if (isWicket && wicketPlayerId) {
+      bowlerUpdates.totalWickets = sql`${playerStats.totalWickets} + 1`;
+    }
+
+    await db.insert(playerStats)
+      .values({
+        playerId: bowlerId,
+        seriesId,
+        ballsBowled: 1,
+        runsConceded: runs,
+        totalWickets: (isWicket && wicketPlayerId) ? 1 : 0,
+      })
+      .onConflictDoUpdate({
+        target: [playerStats.playerId, playerStats.seriesId],
+        set: bowlerUpdates,
+      });
+
+    // Update fielder stats based on wicket type
+    if (isWicket && fielderId && wicketType) {
+      const fielderUpdates: any = {};
+      
+      if (wicketType.toLowerCase() === 'caught') {
+        fielderUpdates.totalCatches = sql`${playerStats.totalCatches} + 1`;
+      } else if (wicketType.toLowerCase() === 'stumped') {
+        fielderUpdates.totalStumpings = sql`${playerStats.totalStumpings} + 1`;
+      } else if (wicketType.toLowerCase() === 'run out') {
+        fielderUpdates.totalRunOuts = sql`${playerStats.totalRunOuts} + 1`;
+      }
+
+      if (Object.keys(fielderUpdates).length > 0) {
+        await db.insert(playerStats)
+          .values({
+            playerId: fielderId,
+            seriesId,
+            totalCatches: wicketType.toLowerCase() === 'caught' ? 1 : 0,
+            totalStumpings: wicketType.toLowerCase() === 'stumped' ? 1 : 0,
+            totalRunOuts: wicketType.toLowerCase() === 'run out' ? 1 : 0,
+          })
+          .onConflictDoUpdate({
+            target: [playerStats.playerId, playerStats.seriesId],
+            set: fielderUpdates,
+          });
+      }
     }
   }
 
@@ -486,6 +528,7 @@ export class DatabaseStorage implements IStorage {
       bowlerId: ballData.bowlerId,
       runs: ballData.runs,
       isWicket: ballData.isWicket,
+      wicketType: ballData.wicketType,
       wicketPlayerId: ballData.wicketPlayerId,
       fielderId: ballData.fielderId,
       seriesId: ballData.seriesId,

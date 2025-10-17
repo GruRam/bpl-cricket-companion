@@ -240,11 +240,15 @@ Changelog:
     - Both teams' stats displayed correctly with proper team names
     - Separated batting and bowling stats by innings
   
-  * **CRITICAL ISSUE IDENTIFIED - Stats Not Saving**:
-    - Ball-by-ball data is currently only saved to localStorage, NOT to database
-    - The `/api/balls` endpoint exists but is never called from frontend
-    - This prevents player stats from being calculated and displayed
-    - Match results don't appear in series stats because balls aren't persisted
-    - **Fix Required**: Add API calls to save each ball to database via POST /api/balls
-    - This will enable real player statistics and match history tracking
+  * **CRITICAL BUG FIX - Database Integration for Stats**:
+    - Identified that balls were only saved to localStorage, not database
+    - Implemented efficient database integration:
+      * Created `saveBallWithContext` method in storage that auto-creates innings/overs
+      * Added `/api/balls/save-with-context` endpoint for one-call ball saving
+      * Uses fire-and-forget pattern - doesn't block UI while saving
+      * Automatically updates player stats after each ball
+    - Frontend now calls new endpoint with complete ball data
+    - Ball saving includes: matchId, seriesId, innings, over, all player IDs, runs, wickets, extras
+    - Stats now properly calculate and display from persisted match data
+    - Match results now appear in series stats and history
 ```

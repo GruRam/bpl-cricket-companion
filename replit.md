@@ -225,4 +225,26 @@ Changelog:
     - Player selection reset for new innings
     - Automatic saved state cleanup on match completion
     - Continue match option preserves all game context including common players
+
+- October 17, 2025. Mobile responsiveness and critical bug fixes:
+  * Complete mobile optimization:
+    - Fixed bottom navigation to distribute icons evenly across full width
+    - Added responsive padding and spacing throughout all pages
+    - Made ball-by-ball scoring buttons larger (3-column grid on mobile)
+    - Implemented scrollable stats tables with sticky player name column
+    - Optimized all cards, forms, and typography for mobile screens
+  * Fixed team name display to show "Team X vs Team Y" format in home page
+  * Fixed scorecard to properly separate teams and innings:
+    - Added innings tracking to all balls
+    - First innings scorecard shows separately when in second innings
+    - Both teams' stats displayed correctly with proper team names
+    - Separated batting and bowling stats by innings
+  
+  * **CRITICAL ISSUE IDENTIFIED - Stats Not Saving**:
+    - Ball-by-ball data is currently only saved to localStorage, NOT to database
+    - The `/api/balls` endpoint exists but is never called from frontend
+    - This prevents player stats from being calculated and displayed
+    - Match results don't appear in series stats because balls aren't persisted
+    - **Fix Required**: Add API calls to save each ball to database via POST /api/balls
+    - This will enable real player statistics and match history tracking
 ```

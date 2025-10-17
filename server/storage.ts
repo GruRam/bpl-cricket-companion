@@ -182,6 +182,28 @@ export class DatabaseStorage implements IStorage {
     return updatedMatch;
   }
 
+  async deleteMatch(id: number): Promise<void> {
+    // Delete all related data first
+    // Delete balls (through innings and overs)
+    const matchInnings = await db.select().from(innings).where(eq(innings.matchId, id));
+    for (const inning of matchInnings) {
+      const inningOvers = await db.select().from(overs).where(eq(overs.inningsId, inning.id));
+      for (const over of inningOvers) {
+        await db.delete(balls).where(eq(balls.overId, over.id));
+      }
+      await db.delete(overs).where(eq(overs.inningsId, inning.id));
+    }
+    
+    // Delete innings
+    await db.delete(innings).where(eq(innings.matchId, id));
+    
+    // Delete match players
+    await db.delete(matchPlayers).where(eq(matchPlayers.matchId, id));
+    
+    // Delete the match
+    await db.delete(matches).where(eq(matches.id, id));
+  }
+
   async getMatchPlayers(matchId: number): Promise<(MatchPlayer & { player: Player })[]> {
     return await db
       .select()

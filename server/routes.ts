@@ -186,7 +186,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const match = await storage.updateMatch(id, updates);
       
       // If match is becoming completed (wasn't completed before), update team and player stats
-      if (updates.isCompleted && !currentMatchData?.isCompleted) {
+      if (updates.isCompleted && !currentMatchData?.isCompleted && match.seriesId) {
         // Increment team wins if there's a winner
         if (updates.winningTeamId) {
           const winningTeamId = updates.winningTeamId;
@@ -199,9 +199,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         // Update player stats for all match participants
+        const seriesId = match.seriesId!; // Non-null assertion since we check it's not null above
         const matchPlayers = await storage.getMatchPlayers(id);
         for (const mp of matchPlayers) {
-          const playerStats = await storage.getPlayerStats(mp.playerId, match.seriesId);
+          const playerStats = await storage.getPlayerStats(mp.playerId, seriesId);
           const currentStats = playerStats.length > 0 ? playerStats[0] : null;
           
           if (currentStats) {
@@ -213,13 +214,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
               ? (currentStats.totalWins || 0) + 1 
               : currentStats.totalWins;
             
-            await storage.updatePlayerStats(mp.playerId, match.seriesId, {
+            await storage.updatePlayerStats(mp.playerId, seriesId, {
               matchesPlayed: newMatchesPlayed,
               totalWins: newTotalWins,
             });
           } else {
             // Create stats if they don't exist
-            await storage.updatePlayerStats(mp.playerId, match.seriesId, {
+            await storage.updatePlayerStats(mp.playerId, seriesId, {
               matchesPlayed: 1,
               totalWins: mp.teamId === updates.winningTeamId ? 1 : 0,
             });
@@ -230,6 +231,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(match);
     } catch (error) {
       res.status(400).json({ error: "Failed to update match" });
+    }
+  });
+
+  app.delete("/api/matches/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteMatch(id);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(400).json({ error: "Failed to delete match" });
     }
   });
 

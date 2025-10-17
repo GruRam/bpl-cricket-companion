@@ -1,14 +1,18 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Play, Users, BarChart3, TrendingUp, Plus } from "lucide-react";
-import { Link } from "wouter";
+import { Play, Users, BarChart3, TrendingUp, Plus, Trash2, RotateCcw } from "lucide-react";
+import { Link, useLocation } from "wouter";
 import CreateSeriesModal from "@/components/modals/create-series-modal";
 import { Series, Match, Team } from "@shared/schema";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Home() {
   const [showCreateSeriesModal, setShowCreateSeriesModal] = useState(false);
+  const [, setLocation] = useLocation();
+  const { toast } = useToast();
   
   const { data: activeSeries, isLoading: isLoadingActiveSeries } = useQuery<Series>({
     queryKey: ["/api/series/active"],
@@ -23,6 +27,39 @@ export default function Home() {
     queryKey: [`/api/series/${activeSeries?.id}/recent-matches`],
     enabled: !!activeSeries?.id,
   });
+
+  const deleteMatchMutation = useMutation({
+    mutationFn: async (matchId: number) => {
+      await apiRequest("DELETE", `/api/matches/${matchId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/series/${activeSeries?.id}/recent-matches`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/series/${activeSeries?.id}/progress`] });
+      toast({
+        title: "Match Deleted",
+        description: "The match has been removed successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to delete match",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleResumeMatch = (matchId: number) => {
+    // Store the match ID in localStorage for resume
+    localStorage.setItem('resumeMatchId', matchId.toString());
+    setLocation('/match');
+  };
+
+  const handleDeleteMatch = (matchId: number) => {
+    if (confirm('Are you sure you want to delete this match? This action cannot be undone.')) {
+      deleteMatchMutation.mutate(matchId);
+    }
+  };
 
   if (isLoadingActiveSeries) {
     return <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -134,12 +171,12 @@ export default function Home() {
                   <div 
                     className="bg-gradient-to-r from-purple-400 to-green-400 h-3 rounded-full transition-all duration-500"
                     style={{ 
-                      width: `${(seriesProgress.team1Wins / activeSeries.targetWins) * 100}%` 
+                      width: `${(seriesProgress.team1Wins / (activeSeries?.targetWins || 13)) * 100}%` 
                     }}
                   />
                 </div>
                 <div className="text-center text-sm text-muted-foreground mt-2">
-                  First to {activeSeries.targetWins || 13} wins
+                  First to {activeSeries?.targetWins || 13} wins
                 </div>
               </div>
               <div className="text-center">
@@ -158,23 +195,50 @@ export default function Home() {
           {recentMatches && recentMatches.length > 0 ? (
             <div className="space-y-4">
               {recentMatches.map((match) => (
-                <div key={match.id} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                <div key={match.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-muted/50 rounded-lg gap-3">
                   <div className="flex items-center space-x-4">
-                    <div className={`w-2 h-2 rounded-full ${match.isCompleted ? 'bg-green-500' : 'bg-yellow-500'}`} />
+                    <div className={`w-2 h-2 rounded-full flex-shrink-0 ${match.isCompleted ? 'bg-green-500' : 'bg-yellow-500'}`} />
                     <div>
                       <div className="font-medium text-foreground">Match #{match.id}</div>
                       <div className="text-sm text-muted-foreground">
-                        {new Date(match.matchDate).toLocaleDateString()}
+                        {match.matchDate ? new Date(match.matchDate).toLocaleDateString() : 'No date'}
                       </div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="font-semibold text-foreground">
-                      {match.isCompleted ? 'Completed' : 'In Progress'}
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="text-right mr-2">
+                      <div className="font-semibold text-foreground text-sm sm:text-base">
+                        {match.isCompleted ? 'Completed' : 'In Progress'}
+                      </div>
+                      <div className="text-xs sm:text-sm text-muted-foreground">
+                        {match.winningTeamId ? `Winner: Team ${match.winningTeamId}` : 'Ongoing'}
+                      </div>
                     </div>
-                    <div className="text-sm text-muted-foreground">
-                      {match.winningTeamId ? `Winner: Team ${match.winningTeamId}` : 'Ongoing'}
-                    </div>
+                    {!match.isCompleted && (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleResumeMatch(match.id)}
+                          data-testid={`button-resume-match-${match.id}`}
+                          className="flex items-center gap-1"
+                        >
+                          <RotateCcw className="w-4 h-4" />
+                          <span className="hidden sm:inline">Resume</span>
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleDeleteMatch(match.id)}
+                          disabled={deleteMatchMutation.isPending}
+                          data-testid={`button-delete-match-${match.id}`}
+                          className="flex items-center gap-1 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          <span className="hidden sm:inline">Delete</span>
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </div>
               ))}

@@ -54,7 +54,11 @@ export default function Home() {
       <div className="cricket-gradient rounded-xl p-4 sm:p-6 mb-6 sm:mb-8 text-white shadow-lg">
         <div className="flex justify-between items-center">
           <div>
-            <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-1 sm:mb-2">{activeSeries.name}</h2>
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-1 sm:mb-2">
+              {activeSeries.name.includes(' vs ') 
+                ? activeSeries.name.split(' vs ').map(name => `Team ${name.trim()}`).join(' vs ')
+                : activeSeries.name}
+            </h2>
             <p className="text-xs sm:text-sm text-white/90">
               First to {activeSeries.targetWins} wins
               {seriesProgress && ` • Currently ${seriesProgress.team1Wins}-${seriesProgress.team2Wins}`}

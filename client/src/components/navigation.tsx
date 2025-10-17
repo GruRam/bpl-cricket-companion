@@ -71,15 +71,15 @@ export default function Navigation() {
 
       {/* Mobile Bottom Navigation */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border pb-safe">
-        <div className="grid grid-cols-4 h-16">
+        <div className="flex w-full h-16">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = location === tab.path;
             return (
-              <Link key={tab.id} href={tab.path}>
+              <Link key={tab.id} href={tab.path} className="flex-1">
                 <button
                   data-testid={`nav-${tab.id}`}
-                  className={`flex flex-col items-center justify-center h-full transition-colors ${
+                  className={`flex flex-col items-center justify-center h-16 w-full transition-colors ${
                     isActive 
                       ? "text-purple-600 dark:text-purple-400" 
                       : "text-muted-foreground hover:text-foreground"

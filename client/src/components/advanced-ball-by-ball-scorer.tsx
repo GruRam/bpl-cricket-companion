@@ -469,12 +469,29 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
     }
     
     // Update total score
-    setTotalScore(prev => ({
-      runs: prev.runs + totalRuns,
-      wickets: entry.isWicket ? prev.wickets + 1 : prev.wickets,
-      overs: isValidBall && currentBallInOver === 6 ? prev.overs + 1 : prev.overs,
-      balls: isValidBall ? (currentBallInOver === 6 ? 0 : prev.balls + 1) : prev.balls
-    }));
+    const newScore = {
+      runs: totalScore.runs + totalRuns,
+      wickets: entry.isWicket ? totalScore.wickets + 1 : totalScore.wickets,
+      overs: isValidBall && currentBallInOver === 6 ? totalScore.overs + 1 : totalScore.overs,
+      balls: isValidBall ? (currentBallInOver === 6 ? 0 : totalScore.balls + 1) : totalScore.balls
+    };
+    
+    setTotalScore(newScore);
+    
+    // Check for match end conditions in 2nd innings
+    if (currentInnings === 2 && firstInningsScore) {
+      const target = firstInningsScore.runs + 1;
+      const wicketsDown = newScore.wickets >= 10;
+      const targetChased = newScore.runs >= target;
+      
+      if (targetChased || wicketsDown) {
+        setIsInningsComplete(true);
+        calculateMatchWinner();
+        setIsMatchComplete(true);
+        clearSavedState();
+        return; // Exit early to prevent further processing
+      }
+    }
     
     // Handle striker rotation - only if not in single batting mode
     if (isValidBall && (entry.runs % 2 === 1) && !singleBattingMode) {
@@ -501,13 +518,16 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
         // Save previous bowler so they can't bowl consecutive overs
         setPreviousBowler(bowler);
         
-        // Check if innings is complete after this over
-        if (currentOver >= match.oversPerSide) {
+        // Check if innings is complete after this over (overs limit or all out)
+        const isOversComplete = currentOver >= match.oversPerSide;
+        const isAllOut = newScore.wickets >= 10;
+        
+        if (isOversComplete || isAllOut) {
           setIsInningsComplete(true);
           // Check if this is the end of first or second innings
           if (currentInnings === 1) {
             // Save first innings score
-            setFirstInningsScore({ ...totalScore });
+            setFirstInningsScore(newScore);
             setShowInningsBreak(true);
           } else {
             // Calculate winner and margin
@@ -700,6 +720,20 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
               <div className="font-medium">
                 {match.team1.id === match.battingTeam.id ? match.team2.name : match.team1.name}: {firstInningsScore.runs}/{firstInningsScore.wickets} ({firstInningsScore.overs}.{firstInningsScore.balls} overs)
               </div>
+              {(() => {
+                const target = firstInningsScore.runs + 1;
+                const runsRequired = target - totalScore.runs;
+                const ballsCompleted = totalScore.overs * 6 + totalScore.balls;
+                const ballsRemaining = (match.oversPerSide * 6) - ballsCompleted;
+                
+                if (runsRequired > 0) {
+                  return (
+                    <div className="mt-2 text-lg font-bold text-orange-600 dark:text-orange-400">
+                      Need {runsRequired} runs in {ballsRemaining} balls
+                    </div>
+                  );
+                }
+              })()}
             </div>
           )}
           

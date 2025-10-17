@@ -107,22 +107,16 @@ export default function MatchSetupModal({ isOpen, onClose, onMatchStart, activeS
   // Mutation to create match in database
   const createMatchMutation = useMutation({
     mutationFn: async (matchData: any) => {
-      return await apiRequest("/api/matches", {
-        method: "POST",
-        body: JSON.stringify(matchData),
-        headers: { "Content-Type": "application/json" },
-      });
+      const response = await apiRequest("POST", "/api/matches", matchData);
+      return await response.json();
     },
   });
 
   // Mutation to add player to match
   const addPlayerToMatchMutation = useMutation({
     mutationFn: async ({ matchId, playerId, teamId }: { matchId: number; playerId: number; teamId: number }) => {
-      return await apiRequest(`/api/matches/${matchId}/players`, {
-        method: "POST",
-        body: JSON.stringify({ playerId, teamId }),
-        headers: { "Content-Type": "application/json" },
-      });
+      const response = await apiRequest("POST", `/api/matches/${matchId}/players`, { playerId, teamId });
+      return await response.json();
     },
   });
 

@@ -7,7 +7,7 @@ import { Plus, User, Edit2, Check, X } from "lucide-react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import AddPlayerModal from "@/components/modals/add-player-modal";
 import { useToast } from "@/hooks/use-toast";
-import type { Player } from "@shared/schema";
+import type { Player, Series } from "@shared/schema";
 
 export default function Players() {
   const [showAddModal, setShowAddModal] = useState(false);
@@ -17,6 +17,33 @@ export default function Players() {
 
   const { data: players, isLoading } = useQuery({
     queryKey: ["/api/players"],
+  });
+
+  const { data: activeSeries } = useQuery<Series>({
+    queryKey: ["/api/series/active"],
+  });
+
+  // Get real-time player stats for the active series
+  const { data: playerStats = [] } = useQuery<Array<{
+    id: number;
+    playerId: number;
+    seriesId: number;
+    totalRuns: number;
+    totalBalls: number;
+    totalWickets: number;
+    totalCatches: number;
+    ballsBowled: number;
+    runsConceded: number;
+    highestScore: number;
+    stumpings: number;
+    runouts: number;
+    matchesPlayed: number;
+    totalWins: number;
+    player: Player;
+  }>>({
+    queryKey: [`/api/series/${activeSeries?.id}/stats`],
+    enabled: !!activeSeries?.id,
+    refetchInterval: 5000, // Refresh every 5 seconds for real-time updates
   });
 
   const updatePlayerMutation = useMutation({
@@ -144,22 +171,29 @@ export default function Players() {
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <div className="text-muted-foreground">Matches</div>
-                    <div className="font-semibold">0</div>
-                  </div>
-                  <div>
-                    <div className="text-muted-foreground">Runs</div>
-                    <div className="font-semibold">0</div>
-                  </div>
-                  <div>
-                    <div className="text-muted-foreground">Wickets</div>
-                    <div className="font-semibold">0</div>
-                  </div>
-                  <div>
-                    <div className="text-muted-foreground">Catches</div>
-                    <div className="font-semibold">0</div>
-                  </div>
+                  {(() => {
+                    const stats = playerStats.find(s => s.playerId === player.id);
+                    return (
+                      <>
+                        <div>
+                          <div className="text-muted-foreground">Matches</div>
+                          <div className="font-semibold text-foreground">{stats?.matchesPlayed || 0}</div>
+                        </div>
+                        <div>
+                          <div className="text-muted-foreground">Runs</div>
+                          <div className="font-semibold text-foreground">{stats?.totalRuns || 0}</div>
+                        </div>
+                        <div>
+                          <div className="text-muted-foreground">Wickets</div>
+                          <div className="font-semibold text-foreground">{stats?.totalWickets || 0}</div>
+                        </div>
+                        <div>
+                          <div className="text-muted-foreground">Catches</div>
+                          <div className="font-semibold text-foreground">{stats?.totalCatches || 0}</div>
+                        </div>
+                      </>
+                    );
+                  })()}
                 </div>
               </CardContent>
             </Card>

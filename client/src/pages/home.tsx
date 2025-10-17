@@ -21,11 +21,13 @@ export default function Home() {
   const { data: seriesProgress } = useQuery<{ team1Wins: number; team2Wins: number; team1: Team; team2: Team }>({
     queryKey: [`/api/series/${activeSeries?.id}/progress`],
     enabled: !!activeSeries?.id,
+    refetchInterval: 2000, // Update every 2 seconds for faster updates
   });
 
   const { data: recentMatches } = useQuery<Match[]>({
     queryKey: [`/api/series/${activeSeries?.id}/recent-matches`],
     enabled: !!activeSeries?.id,
+    refetchInterval: 3000, // Update every 3 seconds
   });
 
   const deleteMatchMutation = useMutation({
@@ -211,7 +213,9 @@ export default function Home() {
                         {match.isCompleted ? 'Completed' : 'In Progress'}
                       </div>
                       <div className="text-xs sm:text-sm text-muted-foreground">
-                        {match.winningTeamId ? `Winner: Team ${match.winningTeamId}` : 'Ongoing'}
+                        {match.winningTeamId ? 
+                          `Winner: ${seriesProgress?.team1.id === match.winningTeamId ? seriesProgress.team1.name : seriesProgress?.team2.name}` 
+                          : 'Ongoing'}
                       </div>
                     </div>
                     {!match.isCompleted && (

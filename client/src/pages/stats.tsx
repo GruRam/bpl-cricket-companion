@@ -136,9 +136,9 @@ export default function Stats() {
 
           {/* Top Bowlers */}
           <Card>
-            <CardContent className="p-6">
-              <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center">
-                <TrendingUp className="w-5 h-5 mr-2 text-red-600" />
+            <CardContent className="p-4 sm:p-6">
+              <h3 className="text-base sm:text-lg font-semibold text-foreground mb-3 sm:mb-4 flex items-center">
+                <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-red-600" />
                 Top Bowlers
               </h3>
               {playerStats && playerStats.length > 0 ? (
@@ -184,29 +184,30 @@ export default function Stats() {
         </div>
         
         {/* Comprehensive Player Statistics Table */}
-        <Card className="mb-8">
-          <CardContent className="p-6">
-            <h3 className="text-lg font-semibold text-foreground mb-4">Complete Player Statistics</h3>
+        <Card className="mb-6 sm:mb-8">
+          <CardContent className="p-3 sm:p-4 md:p-6">
+            <h3 className="text-base sm:text-lg font-semibold text-foreground mb-3 sm:mb-4">Complete Player Statistics</h3>
             {playerStats && playerStats.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full table-auto">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left p-2 text-sm font-semibold text-foreground">Player</th>
-                      <th className="text-center p-2 text-sm font-semibold text-foreground">Batting</th>
-                      <th className="text-center p-2 text-sm font-semibold text-foreground">Runs</th>
-                      <th className="text-center p-2 text-sm font-semibold text-foreground">Balls</th>
-                      <th className="text-center p-2 text-sm font-semibold text-foreground">Avg</th>
-                      <th className="text-center p-2 text-sm font-semibold text-foreground">SR</th>
-                      <th className="text-center p-2 text-sm font-semibold text-foreground">HS</th>
-                      <th className="text-center p-2 text-sm font-semibold text-foreground">Bowling</th>
-                      <th className="text-center p-2 text-sm font-semibold text-foreground">Overs</th>
-                      <th className="text-center p-2 text-sm font-semibold text-foreground">Wickets</th>
-                      <th className="text-center p-2 text-sm font-semibold text-foreground">Runs</th>
-                      <th className="text-center p-2 text-sm font-semibold text-foreground">Econ</th>
-                      <th className="text-center p-2 text-sm font-semibold text-foreground">Catches</th>
-                    </tr>
-                  </thead>
+              <div className="overflow-x-auto -mx-3 sm:-mx-4 md:-mx-6">
+                <div className="inline-block min-w-full align-middle">
+                  <table className="min-w-full table-auto text-xs sm:text-sm">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left p-2 sm:p-2 text-xs sm:text-sm font-semibold text-foreground sticky left-0 bg-background z-10">Player</th>
+                        <th className="text-center p-2 text-xs sm:text-sm font-semibold text-foreground">Batting</th>
+                        <th className="text-center p-2 text-xs sm:text-sm font-semibold text-foreground">Runs</th>
+                        <th className="text-center p-2 text-xs sm:text-sm font-semibold text-foreground">Balls</th>
+                        <th className="text-center p-2 text-xs sm:text-sm font-semibold text-foreground">Avg</th>
+                        <th className="text-center p-2 text-xs sm:text-sm font-semibold text-foreground">SR</th>
+                        <th className="text-center p-2 text-xs sm:text-sm font-semibold text-foreground">HS</th>
+                        <th className="text-center p-2 text-xs sm:text-sm font-semibold text-foreground">Bowling</th>
+                        <th className="text-center p-2 text-xs sm:text-sm font-semibold text-foreground">Overs</th>
+                        <th className="text-center p-2 text-xs sm:text-sm font-semibold text-foreground">Wkts</th>
+                        <th className="text-center p-2 text-xs sm:text-sm font-semibold text-foreground">Runs</th>
+                        <th className="text-center p-2 text-xs sm:text-sm font-semibold text-foreground">Econ</th>
+                        <th className="text-center p-2 text-xs sm:text-sm font-semibold text-foreground">Ctch</th>
+                      </tr>
+                    </thead>
                   <tbody>
                     {playerStats
                       .sort((a, b) => b.totalRuns - a.totalRuns)
@@ -221,55 +222,56 @@ export default function Stats() {
                         
                         return (
                           <tr key={stat.playerId} className="border-b hover:bg-muted/50">
-                            <td className="p-2">
-                              <div className="flex items-center space-x-2">
-                                <div className={`w-6 h-6 ${getAvatarColor(index)} rounded-full flex items-center justify-center text-white text-xs font-semibold`}>
+                            <td className="p-1.5 sm:p-2 sticky left-0 bg-background z-10">
+                              <div className="flex items-center space-x-1.5 sm:space-x-2">
+                                <div className={`w-5 h-5 sm:w-6 sm:h-6 ${getAvatarColor(index)} rounded-full flex items-center justify-center text-white text-xs font-semibold flex-shrink-0`}>
                                   {getInitials(stat.player.name)}
                                 </div>
-                                <span className="font-medium text-foreground">{stat.player.name}</span>
+                                <span className="font-medium text-foreground text-xs sm:text-sm whitespace-nowrap">{stat.player.name}</span>
                               </div>
                             </td>
-                            <td className="p-2 text-center text-sm text-muted-foreground">
+                            <td className="p-1.5 sm:p-2 text-center text-xs sm:text-sm text-muted-foreground">
                               {stat.totalRuns > 0 ? "✓" : "-"}
                             </td>
-                            <td className="p-2 text-center text-sm text-foreground font-medium">
+                            <td className="p-1.5 sm:p-2 text-center text-xs sm:text-sm text-foreground font-medium">
                               {stat.totalRuns}
                             </td>
-                            <td className="p-2 text-center text-sm text-muted-foreground">
+                            <td className="p-1.5 sm:p-2 text-center text-xs sm:text-sm text-muted-foreground">
                               {stat.totalBalls}
                             </td>
-                            <td className="p-2 text-center text-sm text-muted-foreground">
+                            <td className="p-1.5 sm:p-2 text-center text-xs sm:text-sm text-muted-foreground">
                               {stat.totalBalls > 0 ? battingAvg.toFixed(1) : "-"}
                             </td>
-                            <td className="p-2 text-center text-sm text-muted-foreground">
+                            <td className="p-1.5 sm:p-2 text-center text-xs sm:text-sm text-muted-foreground">
                               {stat.totalBalls > 0 ? strikeRate.toFixed(1) : "-"}
                             </td>
-                            <td className="p-2 text-center text-sm text-foreground font-medium">
+                            <td className="p-1.5 sm:p-2 text-center text-xs sm:text-sm text-foreground font-medium">
                               {stat.highestScore > 0 ? stat.highestScore : "-"}
                             </td>
-                            <td className="p-2 text-center text-sm text-muted-foreground">
+                            <td className="p-1.5 sm:p-2 text-center text-xs sm:text-sm text-muted-foreground">
                               {stat.ballsBowled > 0 ? "✓" : "-"}
                             </td>
-                            <td className="p-2 text-center text-sm text-muted-foreground">
+                            <td className="p-1.5 sm:p-2 text-center text-xs sm:text-sm text-muted-foreground">
                               {stat.ballsBowled > 0 ? oversDisplay : "-"}
                             </td>
-                            <td className="p-2 text-center text-sm text-foreground font-medium">
+                            <td className="p-1.5 sm:p-2 text-center text-xs sm:text-sm text-foreground font-medium">
                               {stat.totalWickets}
                             </td>
-                            <td className="p-2 text-center text-sm text-muted-foreground">
+                            <td className="p-1.5 sm:p-2 text-center text-xs sm:text-sm text-muted-foreground">
                               {stat.runsConceded}
                             </td>
-                            <td className="p-2 text-center text-sm text-muted-foreground">
+                            <td className="p-1.5 sm:p-2 text-center text-xs sm:text-sm text-muted-foreground">
                               {stat.ballsBowled > 0 ? economy.toFixed(1) : "-"}
                             </td>
-                            <td className="p-2 text-center text-sm text-foreground font-medium">
+                            <td className="p-1.5 sm:p-2 text-center text-xs sm:text-sm text-foreground font-medium">
                               {stat.totalCatches}
                             </td>
                           </tr>
                         );
                       })}
                   </tbody>
-                </table>
+                  </table>
+                </div>
               </div>
             ) : (
               <div className="text-center py-8 text-muted-foreground">
@@ -285,23 +287,23 @@ export default function Stats() {
       {/* Series Progress */}
       {seriesProgress && activeSeries && (
         <Card>
-          <CardContent className="p-6">
-            <h3 className="text-lg font-semibold text-foreground mb-4">Series Progress</h3>
-            <div className="flex items-center justify-between mb-4">
+          <CardContent className="p-4 sm:p-6">
+            <h3 className="text-base sm:text-lg font-semibold text-foreground mb-3 sm:mb-4">Series Progress</h3>
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
               <div className="text-center">
-                <div className="text-2xl font-bold text-purple-600">{seriesProgress.team1Wins}</div>
-                <div className="text-sm text-muted-foreground">{seriesProgress.team1.name}</div>
+                <div className="text-xl sm:text-2xl font-bold text-purple-600 dark:text-purple-400">{seriesProgress.team1Wins}</div>
+                <div className="text-xs sm:text-sm text-muted-foreground">{seriesProgress.team1.name}</div>
               </div>
-              <div className="flex-1 mx-8">
-                <div className="bg-muted rounded-full h-3">
+              <div className="flex-1 w-full sm:mx-4 md:mx-8">
+                <div className="bg-muted rounded-full h-2.5 sm:h-3">
                   <div 
-                    className="bg-gradient-to-r from-purple-400 to-green-400 h-3 rounded-full transition-all duration-500"
+                    className="bg-gradient-to-r from-purple-400 to-green-400 h-2.5 sm:h-3 rounded-full transition-all duration-500"
                     style={{ 
                       width: `${Math.max(seriesProgress.team1Wins, seriesProgress.team2Wins) / activeSeries.targetWins * 100}%` 
                     }}
                   />
                 </div>
-                <div className="text-center text-sm text-muted-foreground mt-2">
+                <div className="text-center text-xs sm:text-sm text-muted-foreground mt-2">
                   First to {activeSeries.targetWins} wins
                 </div>
               </div>

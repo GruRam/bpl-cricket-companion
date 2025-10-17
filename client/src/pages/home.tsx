@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Play, Users, BarChart3, TrendingUp, Plus, Trash2, RotateCcw } from "lucide-react";
+import { Play, Users, BarChart3, TrendingUp, Plus, Trash2, RotateCcw, Eye } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import CreateSeriesModal from "@/components/modals/create-series-modal";
 import { Series, Match, Team } from "@shared/schema";
@@ -54,6 +54,12 @@ export default function Home() {
   const handleResumeMatch = (matchId: number) => {
     // Store the match ID in localStorage for resume
     localStorage.setItem('resumeMatchId', matchId.toString());
+    setLocation('/match');
+  };
+
+  const handleViewScorecard = (matchId: number) => {
+    // Store the match ID in localStorage for scorecard view
+    localStorage.setItem('viewScorecardMatchId', matchId.toString());
     setLocation('/match');
   };
 
@@ -218,7 +224,18 @@ export default function Home() {
                           : 'Ongoing'}
                       </div>
                     </div>
-                    {!match.isCompleted && (
+                    {match.isCompleted ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleViewScorecard(match.id)}
+                        data-testid={`button-view-scorecard-${match.id}`}
+                        className="flex items-center gap-1"
+                      >
+                        <Eye className="w-4 h-4" />
+                        <span className="hidden sm:inline">Scorecard</span>
+                      </Button>
+                    ) : (
                       <>
                         <Button
                           size="sm"

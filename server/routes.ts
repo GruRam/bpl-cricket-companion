@@ -413,6 +413,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/matches/:matchId/scorecard", async (req, res) => {
+    try {
+      const matchId = parseInt(req.params.matchId);
+      const scorecard = await storage.getMatchScorecard(matchId);
+      res.json(scorecard);
+    } catch (error) {
+      console.error("Error fetching scorecard:", error);
+      res.status(500).json({ error: "Failed to fetch match scorecard" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

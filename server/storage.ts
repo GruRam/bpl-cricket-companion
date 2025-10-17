@@ -6,6 +6,7 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 
 export interface IStorage {
   // Players
@@ -489,6 +490,68 @@ export class DatabaseStorage implements IStorage {
       .where(eq(matches.seriesId, seriesId))
       .orderBy(desc(matches.matchDate))
       .limit(limit);
+  }
+
+  async getMatchScorecard(matchId: number): Promise<any> {
+    // Get match details
+    const [match] = await db.select().from(matches).where(eq(matches.id, matchId)).limit(1);
+    if (!match) {
+      throw new Error('Match not found');
+    }
+
+    // Get all balls for this match with innings and over information
+    const strikerAlias = alias(players, 'striker');
+    const bowlerAlias = alias(players, 'bowler');
+    
+    const allBalls = await db.select({
+      id: balls.id,
+      inningsNumber: innings.inningsNumber,
+      overNumber: overs.overNumber,
+      ballNumber: balls.ballNumber,
+      strikerId: balls.strikerId,
+      nonStrikerId: balls.nonStrikerId,
+      bowlerId: balls.bowlerId,
+      runs: balls.runs,
+      isWicket: balls.isWicket,
+      wicketType: balls.wicketType,
+      wicketPlayerId: balls.wicketPlayerId,
+      fielderId: balls.fielderId,
+      extras: balls.extras,
+      isWide: balls.isWide,
+      isNoBall: balls.isNoBall,
+      striker: strikerAlias.name,
+      bowler: bowlerAlias.name,
+    })
+    .from(balls)
+    .leftJoin(overs, eq(balls.overId, overs.id))
+    .leftJoin(innings, eq(balls.inningsId, innings.id))
+    .leftJoin(strikerAlias, eq(balls.strikerId, strikerAlias.id))
+    .leftJoin(bowlerAlias, eq(balls.bowlerId, bowlerAlias.id))
+    .where(eq(innings.matchId, matchId))
+    .orderBy(innings.inningsNumber, overs.overNumber, balls.ballNumber);
+
+    // Get match players with teams
+    const matchPlayerAlias = alias(players, 'matchPlayer');
+    const matchPlayersData = await db.select({
+      playerId: matchPlayers.playerId,
+      teamId: matchPlayers.teamId,
+      playerName: matchPlayerAlias.name,
+    })
+    .from(matchPlayers)
+    .leftJoin(matchPlayerAlias, eq(matchPlayers.playerId, matchPlayerAlias.id))
+    .where(eq(matchPlayers.matchId, matchId));
+
+    // Get teams
+    const [team1] = await db.select().from(teams).where(eq(teams.id, match.team1Id)).limit(1);
+    const [team2] = await db.select().from(teams).where(eq(teams.id, match.team2Id)).limit(1);
+
+    return {
+      match,
+      team1,
+      team2,
+      allBalls,
+      matchPlayers: matchPlayersData,
+    };
   }
 
   async saveBallWithContext(ballData: {

@@ -169,13 +169,8 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
       battingTeamId: number;
       bowlingTeamId: number;
     }) => {
-      return await apiRequest("/api/balls/save-with-context", {
-        method: "POST",
-        body: JSON.stringify(ballData),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await apiRequest("POST", "/api/balls/save-with-context", ballData);
+      return await response.json();
     },
   });
 

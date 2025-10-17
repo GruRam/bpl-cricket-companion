@@ -148,18 +148,28 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
   });
 
   // Mutation for updating player stats
-  const updateStatsMutation = useMutation({
+  const saveBallMutation = useMutation({
     mutationFn: async (ballData: {
+      matchId: number;
+      seriesId: number;
+      inningsNumber: number;
+      overNumber: number;
+      ballNumber: number;
       strikerId: number;
       nonStrikerId: number;
       bowlerId: number;
       runs: number;
+      isWide: boolean;
+      isNoBall: boolean;
       isWicket: boolean;
+      wicketType?: string;
       wicketPlayerId?: number;
       fielderId?: number;
-      seriesId: number;
+      extras: number;
+      battingTeamId: number;
+      bowlingTeamId: number;
     }) => {
-      return await apiRequest("/api/stats/update-from-ball", {
+      return await apiRequest("/api/balls/save-with-context", {
         method: "POST",
         body: JSON.stringify(ballData),
         headers: {
@@ -439,17 +449,27 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
     // Update ball position for display
     setBallPosition(prev => prev + 1);
     
-    // Update player stats in real-time
+    // Save ball to database with auto-creation of innings/overs
     if (activeSeries?.id) {
-      updateStatsMutation.mutate({
+      saveBallMutation.mutate({
+        matchId: match.id,
+        seriesId: activeSeries.id,
+        inningsNumber: currentInnings,
+        overNumber: currentOver,
+        ballNumber: currentBallInOver,
         strikerId: striker.id,
         nonStrikerId: nonStriker.id,
         bowlerId: bowler.id,
         runs: entry.runs,
+        isWide: entry.isWide,
+        isNoBall: entry.isNoBall,
         isWicket: entry.isWicket,
+        wicketType: entry.isWicket ? pendingWicketDetails?.dismissalType : undefined,
         wicketPlayerId: entry.isWicket ? (pendingWicketDetails?.batsmanOut === 'striker' ? striker.id : nonStriker.id) : undefined,
         fielderId: pendingWicketDetails?.fielder ? parseInt(pendingWicketDetails.fielder) : undefined,
-        seriesId: activeSeries.id, // Using active series ID
+        extras: entry.extras,
+        battingTeamId: match.battingTeam.id,
+        bowlingTeamId: match.bowlingTeam.id,
       });
     }
     

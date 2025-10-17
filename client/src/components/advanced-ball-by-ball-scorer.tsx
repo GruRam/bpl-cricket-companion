@@ -40,6 +40,7 @@ interface CompletedBall {
   overNumber: number;
   ballPosition: number; // Position in the over for display
   commentary: string;
+  innings: number; // Track which innings this ball belongs to
 }
 
 export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicketDetails, savedState }: BallByBallScorerProps) {
@@ -56,6 +57,7 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
   const [currentBallInOver, setCurrentBallInOver] = useState(savedState?.currentBallInOver || 1);
   const [overBalls, setOverBalls] = useState<CompletedBall[]>(savedState?.overBalls || []);
   const [allBalls, setAllBalls] = useState<CompletedBall[]>(savedState?.allBalls || []);
+  const [firstInningsBalls, setFirstInningsBalls] = useState<CompletedBall[]>(savedState?.firstInningsBalls || []);
   const [ballPosition, setBallPosition] = useState(savedState?.ballPosition || 1); // Position in over for display
   const [previousBowler, setPreviousBowler] = useState(savedState?.previousBowler || null);
   const [needsBowlerChange, setNeedsBowlerChange] = useState(savedState?.needsBowlerChange || false);
@@ -116,6 +118,7 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
       showInningsBreak,
       firstInningsScore,
       allBalls,
+      firstInningsBalls,
       overBalls,
       needsBowlerChange,
       needsBatsmanChange,
@@ -425,7 +428,8 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
       bowler: bowler.name,
       overNumber: currentOver,
       ballPosition: ballPosition,
-      commentary: generateCommentary(entry, striker.name, bowler.name)
+      commentary: generateCommentary(entry, striker.name, bowler.name),
+      innings: currentInnings
     };
     
     // Add to balls arrays
@@ -624,6 +628,9 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
 
   // Start second innings
   const startSecondInnings = () => {
+    // Save first innings balls before clearing
+    setFirstInningsBalls(allBalls);
+    
     // Swap batting and bowling teams
     const newBattingTeam = match.bowlingTeam;
     const newBowlingTeam = match.battingTeam;
@@ -639,6 +646,7 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
     setCurrentBallInOver(1);
     setBallPosition(1);
     setOverBalls([]);
+    setAllBalls([]); // Clear current innings balls
     setTotalScore({ runs: 0, wickets: 0, overs: 0, balls: 0 });
     setRunRate(0);
     setDismissedPlayers([]);
@@ -1293,9 +1301,128 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
       </Card>
 
       {/* Match Scorecard */}
+      {/* First Innings Scorecard (show when in second innings or match complete) */}
+      {currentInnings === 2 && firstInningsBalls.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              {match.team1.id === match.battingTeam.id 
+                ? `Team ${match.team2.name.replace('Team ', '').replace("'s Team", "")}`
+                : `Team ${match.team1.name.replace('Team ', '').replace("'s Team", "")}`} - Innings 1
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              {/* First Innings Batting */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4">Batting</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left py-2 px-2">Batsman</th>
+                        <th className="text-left py-2 px-2">How Out</th>
+                        <th className="text-right py-2 px-1">R</th>
+                        <th className="text-right py-2 px-1">B</th>
+                        <th className="text-right py-2 px-1">4s</th>
+                        <th className="text-right py-2 px-1">6s</th>
+                        <th className="text-right py-2 px-1">SR</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(() => {
+                        const batsmanStats = {};
+                        firstInningsBalls.forEach(ball => {
+                          const batsman = ball.striker;
+                          if (!batsmanStats[batsman]) {
+                            batsmanStats[batsman] = { runs: 0, balls: 0, fours: 0, sixes: 0 };
+                          }
+                          if (!ball.entry.isWide && !ball.entry.isNoBall) batsmanStats[batsman].balls++;
+                          batsmanStats[batsman].runs += ball.entry.runs;
+                          if (ball.entry.runs === 4) batsmanStats[batsman].fours++;
+                          if (ball.entry.runs === 6) batsmanStats[batsman].sixes++;
+                        });
+                        return Object.entries(batsmanStats).map(([batsman, stats]) => {
+                          const sr = stats.balls > 0 ? ((stats.runs / stats.balls) * 100).toFixed(1) : '0.0';
+                          return (
+                            <tr key={batsman} className="border-b">
+                              <td className="py-2 px-2 font-medium">{batsman}</td>
+                              <td className="py-2 px-2 text-muted-foreground">not out</td>
+                              <td className="py-2 px-1 text-right font-semibold">{stats.runs}</td>
+                              <td className="py-2 px-1 text-right">{stats.balls}</td>
+                              <td className="py-2 px-1 text-right">{stats.fours}</td>
+                              <td className="py-2 px-1 text-right">{stats.sixes}</td>
+                              <td className="py-2 px-1 text-right">{sr}</td>
+                            </tr>
+                          );
+                        });
+                      })()}
+                      <tr className="bg-muted/50">
+                        <td className="py-3 px-2 font-bold">Total</td>
+                        <td className="py-3 px-2 text-muted-foreground">
+                          {firstInningsScore?.overs}.{firstInningsScore?.balls} Ov
+                        </td>
+                        <td className="py-3 px-1 text-right font-bold text-lg">{firstInningsScore?.runs}/{firstInningsScore?.wickets}</td>
+                        <td colSpan={4}></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* First Innings Bowling */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4">Bowling</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left py-2 px-2">Bowler</th>
+                        <th className="text-right py-2 px-1">O</th>
+                        <th className="text-right py-2 px-1">R</th>
+                        <th className="text-right py-2 px-1">W</th>
+                        <th className="text-right py-2 px-1">ECON</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(() => {
+                        const bowlerStats = {};
+                        firstInningsBalls.forEach(ball => {
+                          const bowlerName = ball.bowler;
+                          if (!bowlerStats[bowlerName]) bowlerStats[bowlerName] = { balls: 0, runs: 0, wickets: 0 };
+                          if (!ball.entry.isWide && !ball.entry.isNoBall) bowlerStats[bowlerName].balls++;
+                          bowlerStats[bowlerName].runs += ball.entry.runs + ball.entry.extras;
+                          if (ball.entry.isWicket) bowlerStats[bowlerName].wickets++;
+                        });
+                        return Object.entries(bowlerStats).map(([bowlerName, stats]) => {
+                          const overs = Math.floor(stats.balls / 6) + (stats.balls % 6 > 0 ? `.${stats.balls % 6}` : '');
+                          const economy = stats.balls > 0 ? ((stats.runs / stats.balls) * 6).toFixed(2) : '0.00';
+                          return (
+                            <tr key={bowlerName} className="border-b">
+                              <td className="py-2 px-2 font-medium">{bowlerName}</td>
+                              <td className="py-2 px-1 text-right">{overs}</td>
+                              <td className="py-2 px-1 text-right">{stats.runs}</td>
+                              <td className="py-2 px-1 text-right font-semibold">{stats.wickets}</td>
+                              <td className="py-2 px-1 text-right">{economy}</td>
+                            </tr>
+                          );
+                        });
+                      })()}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Current Innings Scorecard */}
       <Card>
         <CardHeader>
-          <CardTitle>{match.battingTeam.name} Scorecard</CardTitle>
+          <CardTitle>
+            Team {match.battingTeam.name.replace('Team ', '').replace("'s Team", "")} - Innings {currentInnings}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-6">

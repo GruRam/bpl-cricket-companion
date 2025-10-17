@@ -55,6 +55,7 @@ export interface SavedMatchState {
   
   // Ball data
   allBalls: any[];
+  firstInningsBalls?: any[];
   overBalls: any[];
   
   // Flags

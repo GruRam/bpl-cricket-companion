@@ -84,12 +84,13 @@ export default function Players() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-foreground">Player Roster</h2>
+    <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 sm:mb-6">
+        <h2 className="text-xl sm:text-2xl font-bold text-foreground">Player Roster</h2>
         <Button
+          data-testid="button-add-player"
           onClick={() => setShowAddModal(true)}
-          className="bg-purple-600 hover:bg-purple-700 text-white"
+          className="bg-purple-600 hover:bg-purple-700 text-white w-full sm:w-auto"
         >
           <Plus className="w-4 h-4 mr-2" />
           Add Player
@@ -97,7 +98,7 @@ export default function Players() {
       </div>
 
       {players && players.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {players.map((player: Player, index: number) => (
             <Card key={player.id} className="hover:shadow-md transition-shadow">
               <CardContent className="p-6">

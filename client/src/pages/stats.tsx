@@ -308,8 +308,8 @@ export default function Stats() {
                 </div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">{seriesProgress.team2Wins}</div>
-                <div className="text-sm text-muted-foreground">{seriesProgress.team2.name}</div>
+                <div className="text-xl sm:text-2xl font-bold text-green-600 dark:text-green-400">{seriesProgress.team2Wins}</div>
+                <div className="text-xs sm:text-sm text-muted-foreground">{seriesProgress.team2.name}</div>
               </div>
             </div>
           </CardContent>

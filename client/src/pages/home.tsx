@@ -49,13 +49,13 @@ export default function Home() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
       {/* Current Series Header */}
-      <div className="cricket-gradient rounded-xl p-6 mb-8 text-white shadow-lg">
+      <div className="cricket-gradient rounded-xl p-4 sm:p-6 mb-6 sm:mb-8 text-white shadow-lg">
         <div className="flex justify-between items-center">
           <div>
-            <h2 className="text-2xl font-bold mb-2">{activeSeries.name}</h2>
-            <p className="text-white/90">
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-1 sm:mb-2">{activeSeries.name}</h2>
+            <p className="text-xs sm:text-sm text-white/90">
               First to {activeSeries.targetWins} wins
               {seriesProgress && ` • Currently ${seriesProgress.team1Wins}-${seriesProgress.team2Wins}`}
             </p>
@@ -65,31 +65,31 @@ export default function Home() {
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setShowCreateSeriesModal(true)}>
-          <CardContent className="p-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
+        <Card className="hover:shadow-md transition-shadow cursor-pointer active:scale-95 transition-transform" onClick={() => setShowCreateSeriesModal(true)}>
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-semibold text-foreground">Set up Series</h3>
-                <p className="text-muted-foreground">Create new series with teams</p>
+                <h3 className="text-base sm:text-lg font-semibold text-foreground">Set up Series</h3>
+                <p className="text-sm text-muted-foreground">Create new series with teams</p>
               </div>
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                <Users className="w-6 h-6 text-blue-600" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center flex-shrink-0 ml-2">
+                <Users className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 dark:text-blue-400" />
               </div>
             </div>
           </CardContent>
         </Card>
         
         <Link href="/match">
-          <Card className="hover:shadow-md transition-shadow cursor-pointer">
-            <CardContent className="p-6">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer active:scale-95 transition-transform">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold text-foreground">Start New Match</h3>
-                  <p className="text-muted-foreground">Begin scoring a match</p>
+                  <h3 className="text-base sm:text-lg font-semibold text-foreground">Start New Match</h3>
+                  <p className="text-sm text-muted-foreground">Begin scoring a match</p>
                 </div>
-                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                  <Play className="w-6 h-6 text-green-600" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center flex-shrink-0 ml-2">
+                  <Play className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 dark:text-green-400" />
                 </div>
               </div>
             </CardContent>
@@ -97,12 +97,12 @@ export default function Home() {
         </Link>
 
         <Link href="/stats">
-          <Card className="hover:shadow-md transition-shadow cursor-pointer">
-            <CardContent className="p-6">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer active:scale-95 transition-transform">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold text-foreground">View Stats</h3>
-                  <p className="text-muted-foreground">Check performance statistics</p>
+                  <h3 className="text-base sm:text-lg font-semibold text-foreground">View Stats</h3>
+                  <p className="text-sm text-muted-foreground">Check performance statistics</p>
                 </div>
                 <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
                   <BarChart3 className="w-6 h-6 text-purple-600" />

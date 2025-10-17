@@ -188,8 +188,8 @@ export default function Players() {
                           <div className="font-semibold text-foreground">{stats?.totalWickets || 0}</div>
                         </div>
                         <div>
-                          <div className="text-muted-foreground">Catches</div>
-                          <div className="font-semibold text-foreground">{stats?.totalCatches || 0}</div>
+                          <div className="text-muted-foreground">Wins</div>
+                          <div className="font-semibold text-foreground">{stats?.totalWins || 0}</div>
                         </div>
                       </>
                     );

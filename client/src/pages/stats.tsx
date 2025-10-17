@@ -22,11 +22,14 @@ export default function Stats() {
     totalBalls: number;
     totalWickets: number;
     totalCatches: number;
+    totalStumpings: number;
+    totalRunOuts: number;
     ballsBowled: number;
     runsConceded: number;
     highestScore: number;
-    stumpings: number;
-    runouts: number;
+    totalFours: number;
+    totalSixes: number;
+    totalOuts: number;
     matchesPlayed: number;
     totalWins: number;
     player: Player;
@@ -97,6 +100,8 @@ export default function Stats() {
                           <th className="text-center p-2 text-xs sm:text-sm font-semibold text-foreground">Balls</th>
                           <th className="text-center p-2 text-xs sm:text-sm font-semibold text-foreground">Avg</th>
                           <th className="text-center p-2 text-xs sm:text-sm font-semibold text-foreground">SR</th>
+                          <th className="text-center p-2 text-xs sm:text-sm font-semibold text-foreground">4s</th>
+                          <th className="text-center p-2 text-xs sm:text-sm font-semibold text-foreground">6s</th>
                           <th className="text-center p-2 text-xs sm:text-sm font-semibold text-foreground">HS</th>
                         </tr>
                       </thead>
@@ -105,7 +110,8 @@ export default function Stats() {
                           .filter(p => p.totalRuns > 0)
                           .sort((a, b) => b.totalRuns - a.totalRuns)
                           .map((stat, index) => {
-                            const battingAvg = stat.totalBalls > 0 ? (stat.totalRuns / Math.max(1, stat.totalBalls)) * 100 : 0;
+                            // Average = runs per dismissal (total outs)
+                            const battingAvg = (stat.totalOuts || 0) > 0 ? (stat.totalRuns / (stat.totalOuts || 1)) : (stat.totalRuns > 0 ? stat.totalRuns : 0);
                             const strikeRate = stat.totalBalls > 0 ? (stat.totalRuns / stat.totalBalls) * 100 : 0;
                             
                             return (
@@ -137,6 +143,12 @@ export default function Stats() {
                                 </td>
                                 <td className="p-1.5 sm:p-2 text-center text-xs sm:text-sm text-muted-foreground">
                                   {stat.totalBalls > 0 ? strikeRate.toFixed(1) : "-"}
+                                </td>
+                                <td className="p-1.5 sm:p-2 text-center text-xs sm:text-sm text-muted-foreground">
+                                  {stat.totalFours || 0}
+                                </td>
+                                <td className="p-1.5 sm:p-2 text-center text-xs sm:text-sm text-muted-foreground">
+                                  {stat.totalSixes || 0}
                                 </td>
                                 <td className="p-1.5 sm:p-2 text-center text-xs sm:text-sm text-foreground font-semibold">
                                   {stat.highestScore > 0 ? stat.highestScore : "-"}
@@ -264,8 +276,8 @@ export default function Stats() {
                       <tbody>
                         {playerStats
                           .sort((a, b) => {
-                            const aTotal = a.totalRuns + (a.totalWickets * 20) + (a.totalCatches * 10) + ((a.stumpings || 0) * 15) + ((a.runouts || 0) * 15);
-                            const bTotal = b.totalRuns + (b.totalWickets * 20) + (b.totalCatches * 10) + ((b.stumpings || 0) * 15) + ((b.runouts || 0) * 15);
+                            const aTotal = a.totalRuns + (a.totalWickets * 20) + (a.totalCatches * 10) + ((a.totalStumpings || 0) * 15) + ((a.totalRunOuts || 0) * 15);
+                            const bTotal = b.totalRuns + (b.totalWickets * 20) + (b.totalCatches * 10) + ((b.totalStumpings || 0) * 15) + ((b.totalRunOuts || 0) * 15);
                             return bTotal - aTotal;
                           })
                           .map((stat, index) => {
@@ -289,13 +301,13 @@ export default function Stats() {
                                   {stat.totalWickets}
                                 </td>
                                 <td className="p-1.5 sm:p-2 text-center text-xs sm:text-sm text-foreground font-semibold">
-                                  {stat.totalCatches}
+                                  {stat.totalCatches || 0}
                                 </td>
                                 <td className="p-1.5 sm:p-2 text-center text-xs sm:text-sm text-foreground font-semibold">
-                                  {stat.stumpings || 0}
+                                  {stat.totalStumpings || 0}
                                 </td>
                                 <td className="p-1.5 sm:p-2 text-center text-xs sm:text-sm text-foreground font-semibold">
-                                  {stat.runouts || 0}
+                                  {stat.totalRunOuts || 0}
                                 </td>
                                 <td className="p-1.5 sm:p-2 text-center text-xs sm:text-sm text-purple-600 dark:text-purple-400 font-bold">
                                   {stat.totalWins || 0}

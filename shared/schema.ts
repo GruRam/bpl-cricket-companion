@@ -109,6 +109,9 @@ export const playerStats = pgTable("player_stats", {
   seriesWins: integer("series_wins").default(0),
   winsAsCaptain: integer("wins_as_captain").default(0),
   highestScore: integer("highest_score").default(0),
+  totalFours: integer("total_fours").default(0),
+  totalSixes: integer("total_sixes").default(0),
+  totalOuts: integer("total_outs").default(0),
   ballsBowled: integer("balls_bowled").default(0),
   runsConceded: integer("runs_conceded").default(0),
 }, (table) => ({

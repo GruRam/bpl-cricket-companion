@@ -290,6 +290,19 @@ export class DatabaseStorage implements IStorage {
     const { strikerId, nonStrikerId, bowlerId, runs, isWicket, wicketType, wicketPlayerId, fielderId, seriesId } = ballData;
 
     // Upsert striker stats
+    const strikerUpdates: any = {
+      totalRuns: sql`${playerStats.totalRuns} + ${runs}`,
+      totalBalls: sql`${playerStats.totalBalls} + 1`,
+      highestScore: sql`GREATEST(${playerStats.highestScore}, ${runs})`,
+    };
+
+    // Track 4s and 6s
+    if (runs === 4) {
+      strikerUpdates.totalFours = sql`${playerStats.totalFours} + 1`;
+    } else if (runs === 6) {
+      strikerUpdates.totalSixes = sql`${playerStats.totalSixes} + 1`;
+    }
+
     await db.insert(playerStats)
       .values({
         playerId: strikerId,
@@ -297,14 +310,12 @@ export class DatabaseStorage implements IStorage {
         totalRuns: runs,
         totalBalls: 1,
         highestScore: runs,
+        totalFours: runs === 4 ? 1 : 0,
+        totalSixes: runs === 6 ? 1 : 0,
       })
       .onConflictDoUpdate({
         target: [playerStats.playerId, playerStats.seriesId],
-        set: {
-          totalRuns: sql`${playerStats.totalRuns} + ${runs}`,
-          totalBalls: sql`${playerStats.totalBalls} + 1`,
-          highestScore: sql`GREATEST(${playerStats.highestScore}, ${runs})`,
-        },
+        set: strikerUpdates,
       });
 
     // Upsert bowler stats
@@ -357,6 +368,22 @@ export class DatabaseStorage implements IStorage {
           });
       }
     }
+
+    // Track totalOuts for dismissed players
+    if (isWicket && wicketPlayerId) {
+      await db.insert(playerStats)
+        .values({
+          playerId: wicketPlayerId,
+          seriesId,
+          totalOuts: 1,
+        })
+        .onConflictDoUpdate({
+          target: [playerStats.playerId, playerStats.seriesId],
+          set: {
+            totalOuts: sql`${playerStats.totalOuts} + 1`,
+          },
+        });
+    }
   }
 
   private async getOrCreatePlayerStats(playerId: number, seriesId: number): Promise<PlayerStats> {
@@ -399,10 +426,15 @@ export class DatabaseStorage implements IStorage {
         totalBalls: playerStats.totalBalls,
         totalWickets: playerStats.totalWickets,
         totalCatches: playerStats.totalCatches,
+        totalStumpings: playerStats.totalStumpings,
+        totalRunOuts: playerStats.totalRunOuts,
         totalWins: playerStats.totalWins,
         seriesWins: playerStats.seriesWins,
         winsAsCaptain: playerStats.winsAsCaptain,
         highestScore: playerStats.highestScore,
+        totalFours: playerStats.totalFours,
+        totalSixes: playerStats.totalSixes,
+        totalOuts: playerStats.totalOuts,
         ballsBowled: playerStats.ballsBowled,
         runsConceded: playerStats.runsConceded,
         player: players,
@@ -420,10 +452,15 @@ export class DatabaseStorage implements IStorage {
         totalBalls: playerStats.totalBalls,
         totalWickets: playerStats.totalWickets,
         totalCatches: playerStats.totalCatches,
+        totalStumpings: playerStats.totalStumpings,
+        totalRunOuts: playerStats.totalRunOuts,
         totalWins: playerStats.totalWins,
         seriesWins: playerStats.seriesWins,
         winsAsCaptain: playerStats.winsAsCaptain,
         highestScore: playerStats.highestScore,
+        totalFours: playerStats.totalFours,
+        totalSixes: playerStats.totalSixes,
+        totalOuts: playerStats.totalOuts,
         ballsBowled: playerStats.ballsBowled,
         runsConceded: playerStats.runsConceded,
         player: players,

@@ -62,21 +62,23 @@ export default function Stats() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">Statistics</h2>
-        <div className="flex space-x-2">
+    <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 sm:mb-6">
+        <h2 className="text-xl sm:text-2xl font-bold text-foreground dark:text-foreground">Statistics</h2>
+        <div className="flex space-x-2 w-full sm:w-auto">
           <Button
+            data-testid="filter-individual"
             variant={activeFilter === 'individual' ? 'default' : 'outline'}
             onClick={() => setActiveFilter('individual')}
-            className={activeFilter === 'individual' ? 'bg-purple-600 hover:bg-purple-700' : ''}
+            className={`flex-1 sm:flex-none ${activeFilter === 'individual' ? 'bg-purple-600 hover:bg-purple-700' : ''}`}
           >
             Individual
           </Button>
           <Button
+            data-testid="filter-team"
             variant={activeFilter === 'team' ? 'default' : 'outline'}
             onClick={() => setActiveFilter('team')}
-            className={activeFilter === 'team' ? 'bg-purple-600 hover:bg-purple-700' : ''}
+            className={`flex-1 sm:flex-none ${activeFilter === 'team' ? 'bg-purple-600 hover:bg-purple-700' : ''}`}
           >
             Team
           </Button>
@@ -85,12 +87,12 @@ export default function Stats() {
 
       {activeFilter === 'individual' && (
         <>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
           {/* Top Batsmen */}
           <Card>
-            <CardContent className="p-6">
-              <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center">
-                <Target className="w-5 h-5 mr-2 text-green-600" />
+            <CardContent className="p-4 sm:p-6">
+              <h3 className="text-base sm:text-lg font-semibold text-foreground mb-3 sm:mb-4 flex items-center">
+                <Target className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-green-600" />
                 Top Batsmen
               </h3>
               {playerStats && playerStats.length > 0 ? (

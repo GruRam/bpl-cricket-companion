@@ -995,13 +995,14 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
       {/* Scoring Interface */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span>Ball-by-Ball Scoring</span>
-            <div className="flex gap-2">
+          <CardTitle className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <span className="text-lg md:text-xl">Ball-by-Ball Scoring</span>
+            <div className="flex gap-2 w-full sm:w-auto">
               <Button
                 variant={quickEntryMode ? "default" : "outline"}
                 size="sm"
                 onClick={() => setQuickEntryMode(true)}
+                className="flex-1 sm:flex-none"
               >
                 Quick Entry
               </Button>
@@ -1009,6 +1010,7 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
                 variant={!quickEntryMode ? "default" : "outline"}
                 size="sm"
                 onClick={() => setQuickEntryMode(false)}
+                className="flex-1 sm:flex-none"
               >
                 Custom Entry
               </Button>
@@ -1018,11 +1020,13 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
         <CardContent>
           {quickEntryMode ? (
             <div className="space-y-4">
-              <div className="grid grid-cols-5 gap-2">
+              {/* Responsive grid: 3 cols on mobile, 5 cols on larger screens */}
+              <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-3">
                 {quickEntryButtons.map((button) => (
                   <Button
                     key={button.label}
-                    className={`h-12 font-bold ${button.color}`}
+                    data-testid={`ball-${button.label.toLowerCase()}`}
+                    className={`h-14 sm:h-12 text-base sm:text-sm font-bold ${button.color} touch-manipulation`}
                     disabled={needsBowlerChange || needsBatsmanChange || needsInningsSetup || isInningsComplete || isMatchComplete}
                     onClick={() => {
                       if (needsBowlerChange || needsBatsmanChange || needsInningsSetup || isInningsComplete || isMatchComplete) return;

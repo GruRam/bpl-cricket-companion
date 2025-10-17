@@ -1360,7 +1360,10 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
                               [...battingTeamPlayers, ...bowlingTeamPlayers].find(p => p.id === ball.entry.fielderId) : null;
                             const fielderName = fielderPlayer?.name || '';
                             
-                            const batsmanOut = ball.striker;
+                            // Get the batsman who was out from wicketPlayerId
+                            const batsmanOutPlayer = ball.entry.wicketPlayerId ? 
+                              [...battingTeamPlayers, ...bowlingTeamPlayers].find(p => p.id === ball.entry.wicketPlayerId) : null;
+                            const batsmanOut = batsmanOutPlayer?.name || ball.striker;
                             
                             let dismissalText = '';
                             if (wicketType === 'Bowled') {
@@ -1518,8 +1521,10 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
                             [...battingTeamPlayers, ...bowlingTeamPlayers].find(p => p.id === ball.entry.fielderId) : null;
                           const fielderName = fielderPlayer?.name || '';
                           
-                          // Determine which batsman was out
-                          const batsmanOut = ball.striker; // Assuming striker is always the one out for now
+                          // Get the batsman who was out from wicketPlayerId
+                          const batsmanOutPlayer = ball.entry.wicketPlayerId ? 
+                            [...battingTeamPlayers, ...bowlingTeamPlayers].find(p => p.id === ball.entry.wicketPlayerId) : null;
+                          const batsmanOut = batsmanOutPlayer?.name || ball.striker;
                           
                           // Format dismissal text professionally
                           let dismissalText = '';

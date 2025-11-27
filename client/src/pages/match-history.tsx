@@ -13,20 +13,37 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+interface Match {
+  id: number;
+  seriesId: number;
+  team1Id: number;
+  team2Id: number;
+  team1Name?: string;
+  team2Name?: string;
+  matchDate?: string;
+  isCompleted?: boolean;
+  winningTeamId?: number;
+}
+
+interface Series {
+  id: number;
+  name: string;
+}
+
 export default function MatchHistory() {
   const [, setLocation] = useLocation();
   const [selectedSeriesId, setSelectedSeriesId] = useState<string>("all");
 
-  const { data: seriesList = [] } = useQuery({
+  const { data: seriesList = [] } = useQuery<Series[]>({
     queryKey: ["/api/series"],
   });
 
-  const { data: allMatches = [], isLoading } = useQuery({
+  const { data: allMatches = [], isLoading } = useQuery<Match[]>({
     queryKey: ["/api/matches/all"],
   });
 
   const filteredMatches = selectedSeriesId !== "all"
-    ? allMatches.filter((m) => m.seriesId === parseInt(selectedSeriesId))
+    ? allMatches.filter((m: Match) => m.seriesId === parseInt(selectedSeriesId))
     : allMatches;
 
   const handleViewScorecard = (matchId: number) => {
@@ -58,7 +75,7 @@ export default function MatchHistory() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Series</SelectItem>
-                {seriesList?.map((series) => (
+                {seriesList?.map((series: Series) => (
                   <SelectItem key={series.id} value={series.id.toString()}>
                     {series.name}
                   </SelectItem>
@@ -79,11 +96,11 @@ export default function MatchHistory() {
         <div className="space-y-4">
           {filteredMatches
             .sort(
-              (a, b) =>
+              (a: Match, b: Match) =>
                 new Date(b.matchDate || 0).getTime() -
                 new Date(a.matchDate || 0).getTime()
             )
-            .map((match) => (
+            .map((match: Match) => (
               <Card key={match.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="p-4">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">

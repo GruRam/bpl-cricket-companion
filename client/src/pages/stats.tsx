@@ -233,7 +233,7 @@ export default function Stats() {
                             const oversDisplay = balls > 0 ? `${overs}.${balls}` : `${overs}`;
                             
                             return (
-                              <tr key={stat.playerId} className="border-b hover:bg-muted/50">
+                              <tr key={`${stat.id}-${stat.playerId}-bowling`} className="border-b hover:bg-muted/50">
                                 <td className="p-1.5 sm:p-2 sticky left-0 bg-background z-10">
                                   <div className={`w-6 h-6 sm:w-7 sm:h-7 ${index < 3 ? 'bg-gradient-to-br from-red-400 to-red-600' : 'bg-muted'} rounded-full flex items-center justify-center text-white text-xs font-bold`}>
                                     {index + 1}
@@ -314,7 +314,7 @@ export default function Stats() {
                           })
                           .map((stat, index) => {
                             return (
-                              <tr key={stat.playerId} className="border-b hover:bg-muted/50">
+                              <tr key={`${stat.id}-${stat.playerId}-allround`} className="border-b hover:bg-muted/50">
                                 <td className="p-1.5 sm:p-2 sticky left-0 bg-background z-10">
                                   <div className="flex items-center space-x-1.5 sm:space-x-2">
                                     <div className={`w-5 h-5 sm:w-6 sm:h-6 ${getAvatarColor(index)} rounded-full flex items-center justify-center text-white text-xs font-semibold flex-shrink-0`}>

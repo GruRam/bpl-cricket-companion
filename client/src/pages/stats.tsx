@@ -47,7 +47,9 @@ export default function Stats() {
     matchesPlayed: number;
     totalWins: number;
     seriesWins: number;
+    seriesPlayed: number;
     winsAsCaptain: number;
+    captainSeriesPlayed: number;
     player: Player;
   }>>({
     queryKey: ["/api/stats/all"],
@@ -345,10 +347,10 @@ export default function Stats() {
                                   {stat.totalWins || 0}
                                 </td>
                                 <td className="p-1.5 sm:p-2 text-center text-xs sm:text-sm text-muted-foreground">
-                                  {stat.seriesWins ? ((stat.seriesWins / (stat.matchesPlayed || 1)) * 100).toFixed(0) : '0'}%
+                                  {stat.seriesPlayed > 0 ? ((stat.seriesWins / stat.seriesPlayed) * 100).toFixed(0) : '0'}%
                                 </td>
                                 <td className="p-1.5 sm:p-2 text-center text-xs sm:text-sm text-muted-foreground">
-                                  {stat.winsAsCaptain ? ((stat.winsAsCaptain / Math.max(1, stat.matchesPlayed)) * 100).toFixed(0) : '0'}%
+                                  {stat.captainSeriesPlayed > 0 ? ((stat.winsAsCaptain / stat.captainSeriesPlayed) * 100).toFixed(0) : '0'}%
                                 </td>
                               </tr>
                             );

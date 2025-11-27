@@ -187,10 +187,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // If match is becoming completed (wasn't completed before), update team and player stats
       if (updates.isCompleted && !currentMatchData?.isCompleted && match.seriesId) {
+        const seriesId = match.seriesId!;
+        
         // Increment team wins if there's a winner
         if (updates.winningTeamId) {
           const winningTeamId = updates.winningTeamId;
-          const teams = await storage.getTeamsBySeries(match.seriesId);
+          const teams = await storage.getTeamsBySeries(seriesId);
           const team = teams.find(t => t.id === winningTeamId);
           
           if (team) {
@@ -199,7 +201,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         // Update player stats for all match participants
-        const seriesId = match.seriesId!; // Non-null assertion since we check it's not null above
         const matchPlayers = await storage.getMatchPlayers(id);
         for (const mp of matchPlayers) {
           const playerStats = await storage.getPlayerStats(mp.playerId, seriesId);
@@ -223,7 +224,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
             await storage.updatePlayerStats(mp.playerId, seriesId, {
               matchesPlayed: 1,
               totalWins: mp.teamId === updates.winningTeamId ? 1 : 0,
+              seriesPlayed: 1,
             });
+          }
+        }
+        
+        // Check if series is complete (either team reached target wins)
+        const seriesData = await storage.getSeries(seriesId);
+        if (seriesData) {
+          const teams = await storage.getTeamsBySeries(seriesId);
+          const targetWins = seriesData.targetWins || 13;
+          
+          // Get latest team wins
+          const updatedTeams = await storage.getTeamsBySeries(seriesId);
+          const winningTeam = updatedTeams.find(t => (t.wins || 0) >= targetWins);
+          
+          if (winningTeam) {
+            // Series is complete - update series stats for all players
+            const allSeriesPlayers = await storage.getTeamPlayers(seriesId);
+            const seriesPlayers = new Set(allSeriesPlayers.map(tp => tp.playerId));
+            
+            for (const playerId of seriesPlayers) {
+              const playerStats = await storage.getPlayerStats(playerId, seriesId);
+              const currentStats = playerStats.length > 0 ? playerStats[0] : null;
+              
+              if (currentStats) {
+                // Check if this player is on the winning team
+                const playerTeamPlayers = allSeriesPlayers.filter(tp => tp.playerId === playerId);
+                const isOnWinningTeam = playerTeamPlayers.some(tp => tp.teamId === winningTeam.id);
+                
+                const newSeriesWins = isOnWinningTeam 
+                  ? (currentStats.seriesWins || 0) + 1 
+                  : currentStats.seriesWins;
+                
+                await storage.updatePlayerStats(playerId, seriesId, {
+                  seriesWins: newSeriesWins,
+                });
+              }
+            }
+            
+            // Update captain series stats if they were captain
+            for (const team of updatedTeams) {
+              if (team.captainId && (team.wins || 0) >= targetWins) {
+                const captainStats = await storage.getPlayerStats(team.captainId, seriesId);
+                const currentStats = captainStats.length > 0 ? captainStats[0] : null;
+                
+                if (currentStats) {
+                  await storage.updatePlayerStats(team.captainId, seriesId, {
+                    winsAsCaptain: (currentStats.winsAsCaptain || 0) + 1,
+                    captainSeriesPlayed: (currentStats.captainSeriesPlayed || 0) + 1,
+                  });
+                } else {
+                  await storage.updatePlayerStats(team.captainId, seriesId, {
+                    winsAsCaptain: 1,
+                    captainSeriesPlayed: 1,
+                  });
+                }
+              }
+            }
           }
         }
       }

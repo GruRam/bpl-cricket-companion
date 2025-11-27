@@ -609,22 +609,23 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
     const team2 = match.team2;
     
     const firstInningsRuns = firstInningsScore.runs;
+    const firstInningsWickets = firstInningsScore.wickets;
     const secondInningsRuns = totalScore.runs;
+    const secondInningsWickets = totalScore.wickets;
     
     let winner: { teamName: string; margin: string };
     let winningTeamId: number;
     
     if (secondInningsRuns > firstInningsRuns) {
-      // Team batting second (team2) wins
-      const ballsRemaining = (match.oversPerSide * 6) - ((totalScore.overs - 1) * 6 + totalScore.balls);
-      const wicketsRemaining = 10 - totalScore.wickets;
+      // Team batting second (team2) wins - margin by wickets
+      const wicketsRemaining = 10 - secondInningsWickets;
       winner = {
         teamName: team2.name,
         margin: `by ${wicketsRemaining} wickets`
       };
       winningTeamId = team2.id;
     } else if (secondInningsRuns < firstInningsRuns) {
-      // Team batting first (team1) wins
+      // Team batting first (team1) wins - margin by runs
       const runsMargin = firstInningsRuns - secondInningsRuns;
       winner = {
         teamName: team1.name,

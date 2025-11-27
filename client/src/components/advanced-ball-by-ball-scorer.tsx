@@ -604,42 +604,43 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
   const calculateMatchWinner = () => {
     if (!firstInningsScore) return;
     
-    const team1Name = match.team1.id === match.battingTeam.id ? match.team2.name : match.team1.name;
-    const team2Name = match.team1.id === match.battingTeam.id ? match.team1.name : match.team2.name;
+    // team1 batted first, team2 batted second (always)
+    const team1 = match.team1;
+    const team2 = match.team2;
     
     const firstInningsRuns = firstInningsScore.runs;
     const secondInningsRuns = totalScore.runs;
     
     let winner: { teamName: string; margin: string };
+    let winningTeamId: number;
     
     if (secondInningsRuns > firstInningsRuns) {
-      // Team batting second wins
+      // Team batting second (team2) wins
+      const ballsRemaining = (match.oversPerSide * 6) - ((totalScore.overs - 1) * 6 + totalScore.balls);
       const wicketsRemaining = 10 - totalScore.wickets;
       winner = {
-        teamName: team2Name,
+        teamName: team2.name,
         margin: `by ${wicketsRemaining} wickets`
       };
+      winningTeamId = team2.id;
     } else if (secondInningsRuns < firstInningsRuns) {
-      // Team batting first wins
+      // Team batting first (team1) wins
       const runsMargin = firstInningsRuns - secondInningsRuns;
       winner = {
-        teamName: team1Name,
+        teamName: team1.name,
         margin: `by ${runsMargin} runs`
       };
+      winningTeamId = team1.id;
     } else {
       // Tie
       winner = {
         teamName: "Match Tied",
         margin: ""
       };
+      winningTeamId = 0;
     }
     
     setMatchWinner(winner);
-    
-    // Update match in backend with winner
-    const winningTeamId = winner.teamName === team1Name ? 
-      (match.team1.id === match.battingTeam.id ? match.team2.id : match.team1.id) :
-      (match.team1.id === match.battingTeam.id ? match.team1.id : match.team2.id);
     
     if (winner.teamName !== "Match Tied") {
       updateMatchMutation.mutate({

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trophy, Target, TrendingUp, Award } from "lucide-react";
+import { Trophy, Target, TrendingUp, Award, History } from "lucide-react";
 import { Series, Player } from "@shared/schema";
 import {
   Select,
@@ -21,6 +21,10 @@ export default function Stats() {
 
   const { data: seriesList = [] } = useQuery<Series[]>({
     queryKey: ["/api/series"],
+  });
+
+  const { data: recentMatches = [] } = useQuery<any[]>({
+    queryKey: ["/api/matches/recent"],
   });
 
   const { data: players, isLoading: isLoadingPlayers } = useQuery<Player[]>({
@@ -99,7 +103,7 @@ export default function Stats() {
       </div>
 
       <Tabs defaultValue="batting" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-6">
+        <TabsList className="grid w-full grid-cols-4 mb-6">
           <TabsTrigger value="batting" data-testid="tab-batting">
             <Target className="w-4 h-4 mr-2" />
             Batting
@@ -111,6 +115,10 @@ export default function Stats() {
           <TabsTrigger value="allround" data-testid="tab-allround">
             <Trophy className="w-4 h-4 mr-2" />
             All-Round
+          </TabsTrigger>
+          <TabsTrigger value="matches" data-testid="tab-matches">
+            <History className="w-4 h-4 mr-2" />
+            Matches
           </TabsTrigger>
         </TabsList>
 
@@ -363,6 +371,55 @@ export default function Stats() {
                 <div className="text-center py-8 text-muted-foreground">
                   <Award className="w-12 h-12 mx-auto mb-2 text-muted-foreground" />
                   <p>No stats available</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Match History Tab */}
+        <TabsContent value="matches" className="mt-0">
+          <Card>
+            <CardContent className="p-3 sm:p-4 md:p-6">
+              <h3 className="text-base sm:text-lg font-semibold text-foreground mb-3 sm:mb-4">Recent Matches</h3>
+              {recentMatches && recentMatches.length > 0 ? (
+                <div className="space-y-3">
+                  {recentMatches.map((match) => (
+                    <div key={match.id} className="border rounded-lg p-3 sm:p-4 hover:bg-muted/50 transition-colors">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                        <div className="flex-1">
+                          <div className="font-semibold text-sm sm:text-base">
+                            {match.team1?.name || 'Team 1'} vs {match.team2?.name || 'Team 2'}
+                          </div>
+                          <div className="text-xs sm:text-sm text-muted-foreground mt-1">
+                            {new Date(match.matchDate).toLocaleDateString()}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          {match.isCompleted ? (
+                            <div>
+                              <div className="font-bold text-sm sm:text-base text-green-600 dark:text-green-400">
+                                {match.team1?.id === match.winningTeamId ? match.team1?.name : match.team2?.name} won
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {match.team1?.name}: {match.team1Score || 0}/{match.team1Wickets || 0}
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {match.team2?.name}: {match.team2Score || 0}/{match.team2Wickets || 0}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="text-xs sm:text-sm text-blue-600 dark:text-blue-400 font-medium">Ongoing</div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <History className="w-12 h-12 mx-auto mb-2 text-muted-foreground" />
+                  <p>No matches recorded yet</p>
                 </div>
               )}
             </CardContent>

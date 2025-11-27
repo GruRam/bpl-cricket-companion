@@ -1331,12 +1331,19 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
           <div className="space-y-2 max-h-64 overflow-y-auto">
             {allBalls.slice(-10).reverse().map((ball, index) => {
               const overDisplay = ball.overNumber === 1 ? 0 : ball.overNumber - 1;
-              // Format ball number correctly - remove the leading "0." for display
               const ballDisplay = ball.ballNumber ? ball.ballNumber.toString().replace('0.', '') : 'Extra';
+              let comment = ball.commentary || '';
+              
+              // Remove batsman and bowler names from commentary for cleaner display
+              if (comment.includes(' faces ')) {
+                const parts = comment.split(' faces ');
+                comment = parts[1]?.split(' ')[0] ? 'Ball bowled' : comment;
+              }
+              
               return (
                 <div key={index} className="text-sm border-b pb-2">
                   <div className="font-medium">
-                    {overDisplay}.{ballDisplay} - {ball.commentary}
+                    {overDisplay}.{ballDisplay} - {comment}
                   </div>
                 </div>
               );

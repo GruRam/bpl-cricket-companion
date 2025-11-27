@@ -271,6 +271,8 @@ export default function Stats() {
                           <th className="text-center p-2 text-xs sm:text-sm font-semibold text-foreground">St</th>
                           <th className="text-center p-2 text-xs sm:text-sm font-semibold text-foreground">RO</th>
                           <th className="text-center p-2 text-xs sm:text-sm font-semibold text-foreground">Wins</th>
+                          <th className="text-center p-2 text-xs sm:text-sm font-semibold text-foreground">Series Win %</th>
+                          <th className="text-center p-2 text-xs sm:text-sm font-semibold text-foreground">Captain Win %</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -311,6 +313,12 @@ export default function Stats() {
                                 </td>
                                 <td className="p-1.5 sm:p-2 text-center text-xs sm:text-sm text-purple-600 dark:text-purple-400 font-bold">
                                   {stat.totalWins || 0}
+                                </td>
+                                <td className="p-1.5 sm:p-2 text-center text-xs sm:text-sm text-muted-foreground">
+                                  {stat.seriesWins ? ((stat.seriesWins / (stat.matchesPlayed || 1)) * 100).toFixed(0) : '0'}%
+                                </td>
+                                <td className="p-1.5 sm:p-2 text-center text-xs sm:text-sm text-muted-foreground">
+                                  {stat.winsAsCaptain ? ((stat.winsAsCaptain / Math.max(1, stat.matchesPlayed)) * 100).toFixed(0) : '0'}%
                                 </td>
                               </tr>
                             );

@@ -1336,9 +1336,6 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
                   <div className="font-medium">
                     {overDisplay}.{ballDisplay} - {ball.commentary}
                   </div>
-                  <div className="text-xs text-muted-foreground">
-                    {ball.striker} * {ball.nonStriker} | {ball.bowler} bowling
-                  </div>
                 </div>
               );
             })}

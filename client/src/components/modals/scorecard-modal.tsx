@@ -84,11 +84,12 @@ export default function ScorecardModal({ isOpen, onClose, matchData }: Scorecard
       if (ball.runs === 4) stats[ball.striker].fours++;
       if (ball.runs === 6) stats[ball.striker].sixes++;
       
-      // Track dismissal
+      // Track dismissal by checking if wicketPlayerId matches any batsman in this innings
       if (ball.isWicket && ball.wicketPlayerId) {
-        const wicketPlayer = matchPlayers.find(p => p.playerId === ball.wicketPlayerId);
-        if (wicketPlayer) {
-          const batsmanOut = wicketPlayer.playerName;
+        // Find the dismissed batsman from matchPlayers
+        const dismissedPlayer = matchPlayers.find(p => p.playerId === ball.wicketPlayerId);
+        if (dismissedPlayer) {
+          const batsmanOut = dismissedPlayer.playerName;
           const wicketType = ball.wicketType || '';
           const fielderPlayer = matchPlayers.find(p => p.playerId === ball.fielderId);
           const fielderName = fielderPlayer?.playerName || '';
@@ -110,7 +111,10 @@ export default function ScorecardModal({ isOpen, onClose, matchData }: Scorecard
             dismissalText = wicketType.toLowerCase();
           }
           
-          if (stats[batsmanOut]) {
+          // Mark this batsman as dismissed in stats
+          if (!stats[batsmanOut]) {
+            stats[batsmanOut] = { runs: 0, balls: 0, fours: 0, sixes: 0, dismissal: dismissalText };
+          } else {
             stats[batsmanOut].dismissal = dismissalText;
           }
         }

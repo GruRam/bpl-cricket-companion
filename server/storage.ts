@@ -492,6 +492,11 @@ export class DatabaseStorage implements IStorage {
       .limit(limit);
   }
 
+  async getAllMatches(): Promise<Match[]> {
+    return await db.select().from(matches)
+      .orderBy(desc(matches.matchDate));
+  }
+
   async getMatchScorecard(matchId: number): Promise<any> {
     // Get match details
     const [match] = await db.select().from(matches).where(eq(matches.id, matchId)).limit(1);

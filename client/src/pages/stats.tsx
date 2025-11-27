@@ -1,20 +1,34 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Trophy, Target, TrendingUp, Award } from "lucide-react";
 import { Series, Player } from "@shared/schema";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function Stats() {
-  const { data: activeSeries, isLoading: isLoadingActiveSeries } = useQuery<Series>({
+  const [selectedSeriesId, setSelectedSeriesId] = useState<string>("");
+
+  const { data: activeSeries } = useQuery<Series>({
     queryKey: ["/api/series/active"],
+  });
+
+  const { data: seriesList = [] } = useQuery<Series[]>({
+    queryKey: ["/api/series"],
   });
 
   const { data: players, isLoading: isLoadingPlayers } = useQuery<Player[]>({
     queryKey: ["/api/players"],
   });
 
-  // Get real-time player stats for the active series
-  const { data: playerStats = [], isLoading: isLoadingStats } = useQuery<Array<{
+  // Get global player stats
+  const { data: allPlayerStats = [], isLoading: isLoadingStats } = useQuery<Array<{
     id: number;
     playerId: number;
     seriesId: number;
@@ -32,12 +46,18 @@ export default function Stats() {
     totalOuts: number;
     matchesPlayed: number;
     totalWins: number;
+    seriesWins: number;
+    winsAsCaptain: number;
     player: Player;
   }>>({
-    queryKey: [`/api/series/${activeSeries?.id}/stats`],
-    enabled: !!activeSeries?.id,
+    queryKey: ["/api/stats/all"],
     refetchInterval: 5000, // Refresh every 5 seconds for real-time updates
   });
+
+  // Filter stats by series if selected, otherwise show all
+  const playerStats = selectedSeriesId
+    ? allPlayerStats.filter((s) => s.seriesId === parseInt(selectedSeriesId))
+    : allPlayerStats;
 
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
@@ -48,15 +68,9 @@ export default function Stats() {
     return colors[index % colors.length];
   };
 
-  if (isLoadingActiveSeries || isLoadingPlayers) {
+  if (isLoadingPlayers || isLoadingStats) {
     return <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="text-center">Loading statistics...</div>
-    </div>;
-  }
-
-  if (!activeSeries) {
-    return <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="text-center">No active series found. Please create a series first.</div>
     </div>;
   }
 
@@ -64,6 +78,22 @@ export default function Stats() {
     <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 sm:mb-6">
         <h2 className="text-xl sm:text-2xl font-bold text-foreground">Player Statistics</h2>
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-medium text-muted-foreground">Series:</label>
+          <Select value={selectedSeriesId} onValueChange={setSelectedSeriesId}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="All Series" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">All Series</SelectItem>
+              {seriesList.map((s) => (
+                <SelectItem key={s.id} value={s.id.toString()}>
+                  {s.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <Tabs defaultValue="batting" className="w-full">

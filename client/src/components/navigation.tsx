@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Home, Users, Play, BarChart3 } from "lucide-react";
+import { Home, Users, Play, BarChart3, History } from "lucide-react";
 import { ModeToggle } from "@/components/mode-toggle";
 
 export default function Navigation() {
@@ -10,6 +10,7 @@ export default function Navigation() {
     { id: "players", label: "Players", icon: Users, path: "/players" },
     { id: "match", label: "Match", icon: Play, path: "/match" },
     { id: "stats", label: "Stats", icon: BarChart3, path: "/stats" },
+    { id: "history", label: "History", icon: History, path: "/history" },
   ];
 
   return (

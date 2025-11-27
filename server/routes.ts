@@ -424,6 +424,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/matches/all", async (req, res) => {
+    try {
+      const matches = await storage.getAllMatches();
+      res.json(matches);
+    } catch (error) {
+      console.error("Error fetching matches:", error);
+      res.status(500).json({ error: "Failed to fetch matches" });
+    }
+  });
+
+  app.get("/api/stats/all", async (req, res) => {
+    try {
+      const stats = await storage.getAllPlayerStats();
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch global stats" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

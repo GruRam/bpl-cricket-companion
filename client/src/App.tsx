@@ -9,6 +9,7 @@ import Home from "@/pages/home";
 import Players from "@/pages/players";
 import Match from "@/pages/match";
 import Stats from "@/pages/stats";
+import MatchHistory from "@/pages/match-history";
 
 function Router() {
   return (
@@ -21,6 +22,7 @@ function Router() {
           <Route path="/players" component={Players} />
           <Route path="/match" component={Match} />
           <Route path="/stats" component={Stats} />
+          <Route path="/history" component={MatchHistory} />
           <Route component={() => <div className="p-8 text-center">Page not found</div>} />
         </Switch>
       </div>

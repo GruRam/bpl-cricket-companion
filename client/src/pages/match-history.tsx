@@ -17,7 +17,7 @@ export default function MatchHistory() {
   const [, setLocation] = useLocation();
   const [selectedSeriesId, setSelectedSeriesId] = useState<string>("");
 
-  const { data: seriesList } = useQuery({
+  const { data: seriesList = [] } = useQuery({
     queryKey: ["/api/series"],
   });
 

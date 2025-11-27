@@ -85,38 +85,47 @@ export default function ScorecardModal({ isOpen, onClose, matchData }: Scorecard
       if (ball.runs === 6) stats[ball.striker].sixes++;
       
       // Track dismissal by checking if wicketPlayerId matches any batsman in this innings
-      if (ball.isWicket && ball.wicketPlayerId) {
-        // Find the dismissed batsman from matchPlayers
-        const dismissedPlayer = matchPlayers.find(p => p.playerId === ball.wicketPlayerId);
-        if (dismissedPlayer) {
-          const batsmanOut = dismissedPlayer.playerName;
-          const wicketType = ball.wicketType || '';
-          const fielderPlayer = matchPlayers.find(p => p.playerId === ball.fielderId);
-          const fielderName = fielderPlayer?.playerName || '';
-          
-          let dismissalText = '';
-          if (wicketType === 'Bowled') {
-            dismissalText = `b. ${ball.bowler}`;
-          } else if (wicketType === 'Caught') {
-            dismissalText = fielderName ? `c. ${fielderName} b. ${ball.bowler}` : `c & b ${ball.bowler}`;
-          } else if (wicketType === 'Run Out') {
-            dismissalText = fielderName ? `run out (${fielderName})` : 'run out';
-          } else if (wicketType === 'Stumped') {
-            dismissalText = `st. ${fielderName} b. ${ball.bowler}`;
-          } else if (wicketType === 'Hit Wicket') {
-            dismissalText = `hit wicket b. ${ball.bowler}`;
-          } else if (wicketType === 'Boundary Out') {
-            dismissalText = 'boundary out';
-          } else {
-            dismissalText = wicketType.toLowerCase();
+      if (ball.isWicket) {
+        const wicketType = ball.wicketType || '';
+        const fielderPlayer = matchPlayers.find(p => p.playerId === ball.fielderId);
+        const fielderName = fielderPlayer?.playerName || '';
+        
+        // For run outs, the dismissed batsman might not be the striker
+        // Use wicketPlayerId to find the dismissed player, but key by their current name in stats
+        let batsmanOut = ball.striker; // Default to striker
+        if (ball.wicketPlayerId) {
+          const dismissedPlayer = matchPlayers.find(p => p.playerId === ball.wicketPlayerId);
+          if (dismissedPlayer) {
+            // Check if this player already has stats keyed by their name
+            // Use the name that matches an existing key, or the canonical name
+            batsmanOut = dismissedPlayer.playerName;
           }
-          
-          // Mark this batsman as dismissed in stats
-          if (!stats[batsmanOut]) {
-            stats[batsmanOut] = { runs: 0, balls: 0, fours: 0, sixes: 0, dismissal: dismissalText };
-          } else {
-            stats[batsmanOut].dismissal = dismissalText;
-          }
+        }
+        
+        let dismissalText = '';
+        if (wicketType === 'Bowled') {
+          dismissalText = `b. ${ball.bowler}`;
+        } else if (wicketType === 'Caught') {
+          dismissalText = fielderName ? `c. ${fielderName} b. ${ball.bowler}` : `c & b ${ball.bowler}`;
+        } else if (wicketType === 'Run Out') {
+          dismissalText = fielderName ? `run out (${fielderName})` : 'run out';
+        } else if (wicketType === 'Stumped') {
+          dismissalText = `st. ${fielderName} b. ${ball.bowler}`;
+        } else if (wicketType === 'Hit Wicket') {
+          dismissalText = `hit wicket b. ${ball.bowler}`;
+        } else if (wicketType === 'Boundary Out') {
+          dismissalText = 'boundary out';
+        } else {
+          dismissalText = wicketType.toLowerCase();
+        }
+        
+        // Mark this batsman as dismissed in stats - use striker name for consistency
+        // since batting stats are keyed by striker name
+        const keyToUse = stats[batsmanOut] ? batsmanOut : ball.striker;
+        if (!stats[keyToUse]) {
+          stats[keyToUse] = { runs: 0, balls: 0, fours: 0, sixes: 0, dismissal: dismissalText };
+        } else {
+          stats[keyToUse].dismissal = dismissalText;
         }
       }
     });

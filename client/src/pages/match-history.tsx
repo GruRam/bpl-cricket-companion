@@ -113,10 +113,9 @@ export default function MatchHistory() {
                       </p>
                       {match.isCompleted && match.winningTeamId && (
                         <p className="text-sm font-medium text-green-600 dark:text-green-400">
-                          Status: Completed - Winner by{" "}
-                          {match.winningTeamId === match.team1Id
-                            ? "Team 1"
-                            : "Team 2"}
+                          Winner: {match.winningTeamId === match.team1Id
+                            ? (match.team1Name || 'Team 1')
+                            : (match.team2Name || 'Team 2')}
                         </p>
                       )}
                     </div>

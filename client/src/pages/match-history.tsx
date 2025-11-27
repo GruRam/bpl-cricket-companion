@@ -15,7 +15,7 @@ import {
 
 export default function MatchHistory() {
   const [, setLocation] = useLocation();
-  const [selectedSeriesId, setSelectedSeriesId] = useState<string>("");
+  const [selectedSeriesId, setSelectedSeriesId] = useState<string>("all");
 
   const { data: seriesList = [] } = useQuery({
     queryKey: ["/api/series"],
@@ -25,7 +25,7 @@ export default function MatchHistory() {
     queryKey: ["/api/matches/all"],
   });
 
-  const filteredMatches = selectedSeriesId
+  const filteredMatches = selectedSeriesId !== "all"
     ? allMatches.filter((m) => m.seriesId === parseInt(selectedSeriesId))
     : allMatches;
 
@@ -57,7 +57,7 @@ export default function MatchHistory() {
                 <SelectValue placeholder="All Series" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Series</SelectItem>
+                <SelectItem value="all">All Series</SelectItem>
                 {seriesList?.map((series) => (
                   <SelectItem key={series.id} value={series.id.toString()}>
                     {series.name}

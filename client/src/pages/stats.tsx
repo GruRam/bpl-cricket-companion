@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/select";
 
 export default function Stats() {
-  const [selectedSeriesId, setSelectedSeriesId] = useState<string>("");
+  const [selectedSeriesId, setSelectedSeriesId] = useState<string>("all");
 
   const { data: activeSeries } = useQuery<Series>({
     queryKey: ["/api/series/active"],
@@ -55,7 +55,7 @@ export default function Stats() {
   });
 
   // Filter stats by series if selected, otherwise show all
-  const playerStats = selectedSeriesId
+  const playerStats = selectedSeriesId !== "all"
     ? allPlayerStats.filter((s) => s.seriesId === parseInt(selectedSeriesId))
     : allPlayerStats;
 
@@ -85,7 +85,7 @@ export default function Stats() {
               <SelectValue placeholder="All Series" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Series</SelectItem>
+              <SelectItem value="all">All Series</SelectItem>
               {seriesList.map((s) => (
                 <SelectItem key={s.id} value={s.id.toString()}>
                   {s.name}
@@ -145,7 +145,7 @@ export default function Stats() {
                             const strikeRate = stat.totalBalls > 0 ? (stat.totalRuns / stat.totalBalls) * 100 : 0;
                             
                             return (
-                              <tr key={stat.playerId} className="border-b hover:bg-muted/50">
+                              <tr key={`${stat.id}-${stat.playerId}-batting`} className="border-b hover:bg-muted/50">
                                 <td className="p-1.5 sm:p-2 sticky left-0 bg-background z-10">
                                   <div className={`w-6 h-6 sm:w-7 sm:h-7 ${index < 3 ? 'bg-gradient-to-br from-yellow-400 to-yellow-600' : 'bg-muted'} rounded-full flex items-center justify-center text-white text-xs font-bold`}>
                                     {index + 1}

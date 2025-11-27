@@ -2,269 +2,51 @@
 
 ## Overview
 
-This is a full-stack cricket scoring application built using modern web technologies. The application provides real-time scoring capabilities with comprehensive match management, player statistics tracking, and an intuitive user interface designed for cricket enthusiasts.
+This is a full-stack cricket scoring application for real-time scoring, comprehensive match management, player statistics tracking, and an intuitive user interface. Its purpose is to provide an engaging platform for cricket enthusiasts to manage and score matches, track player performance, and follow series progression.
+
+## User Preferences
+
+Preferred communication style: Simple, everyday language.
 
 ## System Architecture
 
-### Frontend Architecture
+### Frontend
 - **Framework**: React 18 with TypeScript
-- **Routing**: Wouter for lightweight client-side routing
-- **State Management**: TanStack Query (React Query) for server state management
-- **UI Framework**: Radix UI components with shadcn/ui design system
-- **Styling**: Tailwind CSS with custom CSS variables for theming
-- **Build Tool**: Vite for fast development and optimized builds
+- **Routing**: Wouter
+- **State Management**: TanStack Query (React Query)
+- **UI**: Radix UI components with shadcn/ui design system
+- **Styling**: Tailwind CSS
+- **Build Tool**: Vite
 
-### Backend Architecture
+### Backend
 - **Runtime**: Node.js with Express.js REST API
 - **Database**: PostgreSQL with Drizzle ORM
 - **Database Provider**: Neon Database (serverless PostgreSQL)
-- **API Pattern**: RESTful endpoints with proper error handling
-- **Development**: Hot module replacement with Vite integration
 
 ### Full-Stack Integration
-- **Monorepo Structure**: Shared TypeScript schemas between client and server
-- **Type Safety**: End-to-end type safety with shared interfaces
+- **Monorepo**: Shared TypeScript schemas for client and server
+- **Type Safety**: End-to-end type safety
 - **Development Server**: Integrated Vite dev server with Express API proxy
 
-## Key Components
-
-### Database Schema
-- **Players**: Core player information with positions (All-Rounder, Batsman, Bowler)
-- **Series**: Tournament structure with configurable win targets
-- **Teams**: Team management with captain assignments
-- **Matches**: Match tracking with innings, overs, and detailed ball-by-ball scoring
-- **Statistics**: Comprehensive player and team performance metrics
-
-### API Endpoints
-- **Players**: CRUD operations for player management
-- **Series**: Active series tracking and management
-- **Teams**: Team composition and player assignments
-- **Matches**: Real-time match scoring and statistics
-- **Statistics**: Aggregated performance data
-
-### User Interface
-- **Dashboard**: Series overview and quick match access
-- **Player Management**: Add, edit, and organize player rosters
-- **Match Scoring**: Real-time ball-by-ball scoring interface
-- **Statistics**: Detailed performance analytics and insights
-
-## Data Flow
-
-### Match Scoring Flow
-1. Match setup with team selection and player assignments
-2. Ball-by-ball entry with runs, wickets, and extras tracking
-3. Real-time score updates and over progression
-4. Automatic statistics calculation and storage
-5. Match completion and series progression tracking
-
-### Database Operations
-1. Drizzle ORM handles all database interactions
-2. Connection pooling via Neon's serverless PostgreSQL
-3. Automatic schema migrations and type generation
-4. Optimistic updates with React Query caching
+### Key Features & Design Choices
+- **Real-time Scoring**: Ball-by-ball entry with runs, wickets, and extras tracking, real-time score updates, and automatic statistics calculation.
+- **Match Management**: Series creation, team setup, player assignments, and comprehensive match setup flows.
+- **Player & Team Statistics**: Tracking of individual player and team performance metrics, including batting statistics, bowling figures, and match outcomes.
+- **User Interface**: Intuitive dashboard, player management, match scoring interface, and detailed statistics views. Includes dark mode and mobile responsiveness.
+- **Game Flow Controls**: Mandatory bowler changes, new batter selection after wickets, and disabled ball entry buttons until required actions are taken.
+- **Innings Transitions**: Comprehensive persistence with automatic saving, "Resume Match" functionality, and smooth transitions between first and second innings.
+- **Scorecard**: Professional scorecard layout displaying batting and bowling statistics, dismissal information, and innings separation.
+- **Over Progress Visualization**: Tennis ball icons with color-coding for runs, wickets, and extras, and a pulsating indicator for the next legitimate ball.
+- **Database Integration**: Matches, players, balls, and statistics are persisted in PostgreSQL, ensuring data integrity and real-time stat updates.
 
 ## External Dependencies
 
-### Core Dependencies
 - **@neondatabase/serverless**: Serverless PostgreSQL connection
 - **drizzle-orm**: Type-safe database operations
 - **@tanstack/react-query**: Server state management
 - **wouter**: Lightweight React routing
 - **@radix-ui/***: Headless UI components
 - **tailwindcss**: Utility-first CSS framework
-
-### Development Dependencies
 - **vite**: Fast build tool and dev server
-- **typescript**: Type safety and developer experience
+- **typescript**: Type safety
 - **@replit/vite-plugin-***: Replit-specific development tools
-
-## Deployment Strategy
-
-### Production Build
-- **Frontend**: Vite builds optimized static assets to `dist/public`
-- **Backend**: esbuild bundles server code to `dist/index.js`
-- **Database**: Drizzle migrations applied via `db:push` command
-
-### Environment Configuration
-- **Development**: `npm run dev` starts both frontend and backend
-- **Production**: `npm run build` then `npm start`
-- **Database**: Requires `DATABASE_URL` environment variable
-
-### Hosting Requirements
-- Node.js runtime environment
-- PostgreSQL database (Neon recommended)
-- Static file serving for frontend assets
-- Environment variable configuration
-
-## User Preferences
-
-Preferred communication style: Simple, everyday language.
-
-## Changelog
-
-```
-Changelog:
-- July 04, 2025. Initial setup
-- July 04, 2025. Enhanced cricket scoring app with:
-  * Updated navigation tabs with cleaner styling
-  * Added series creation functionality with team setup
-  * Removed position field from players (name only)
-  * Added player name editing capability
-  * Simplified match setup to use series team names
-  * Enhanced ball-by-ball scorer with player selection dropdowns
-  * Added ball editing/deletion functionality
-  * Improved quick entry buttons with all run options (0-6)
-  * Added batsman swap functionality
-  * Integrated bowler selection for each over
-
-- July 06, 2025. Major workflow improvements:
-  * Removed series name requirement - auto-generates from captains
-  * Added captain randomizer with manual selection option
-  * Implemented comprehensive match setup modal with 3 steps:
-    - Basic settings (overs per side, first batting team)
-    - Team customization with player status options:
-      * Switch teams
-      * Make common player (plays for both teams)
-      * Mark unavailable for match
-    - Final setup (striker, non-striker, bowler selection)
-  * Enhanced wicket modal with contextual player dropdowns
-  * Removed LBW, added Boundary Out dismissal type
-  * Added active series context display on match page
-  * Fixed infinite API call loops
-  * Team names always reflect captain names (no editing)
-  * Common player concept: match wins for either team, series wins only for original team
-
-- July 06, 2025. Match state persistence and extras handling:
-  * Added automatic match state saving during scoring
-  * Resume prompt when returning to ongoing match
-  * Excluded dismissed and unavailable players from striker/non-striker dropdowns
-  * Improved wide/no-ball handling:
-    - WD/NB display correctly in over progress
-    - No-ball allows additional runs (0-6) on top of extra
-    - Ball counting uses decimal notation (0.1, 0.2) for extras
-    - Wide balls allow dismissals (run out/stumped)
-    - No-ball allows dismissals (run out) plus additional runs
-
-- July 07, 2025. Dark mode and app branding:
-  * Added dark mode toggle with system preference detection
-  * Implemented theme provider with local storage persistence
-  * Updated app name to "BPL Scorer (Buddies Premier League)"
-  * Enhanced navigation with app branding and theme toggle
-  * Added striker/non-striker swap functionality with rotate button
-  * Updated overs per side options to: 2, 6, 7, 8, 9, 10, 12, 20 (2 overs added for testing)
-  * Run out dismissals now include runs scored (0-4) before wicket
-  * Improved ball counting logic for proper cricket rules
-  * Fixed all hard-coded text colors across entire app for proper dark mode support
-  * Replaced text-gray classes with theme-aware text-foreground and text-muted-foreground
-  * Enhanced common player handling in ball-by-ball scoring:
-    - Common players included in both teams' available player lists
-    - Prevents common players from batting and bowling simultaneously
-    - Auto-handles bowler changes when common player switches roles
-    - Special logic for when only common player remains for batting
-    - Common players now appear in fielder dropdowns for dismissals
-  * Implemented compulsory game flow controls:
-    - Bowler change mandatory after each over completion
-    - New batter selection mandatory after wickets before proceeding
-    - All ball entry buttons disabled until required changes are made
-    - Prominent red alert cards with "Done" buttons positioned near ball-by-ball tracking
-    - Clear visual feedback showing required actions before proceeding
-  * Added single batting mode functionality:
-    - Automatically detects when only one batter remains
-    - Remaining batter stays on strike regardless of runs scored
-    - Visual indicator shows when single batting mode is active
-    - Batsman rotation disabled in single batting scenarios
-  * Enhanced over progress visualization:
-    - Replaced confusing number display with tennis ball icons
-    - Color-coded balls: Yellow (next), Blue (runs), Green (boundary), Gray (dot), Red (wicket), Orange (extras)
-    - Clear runs description below each completed ball
-    - Tennis ball texture lines for visual appeal
-    - Color legend for easy understanding
-    - Always shows 6 legitimate ball slots by default (empty gray balls)
-    - Fills balls chronologically as bowled, including extras mixed with regular balls
-    - When extras occur, shows them chronologically but maintains 6 legitimate ball positions
-    - Extra balls (WD/NB) shown in orange with clear labels like "WD" or "NB+1"
-    - Next legitimate ball slot pulses yellow to indicate which ball is next
-  * Implemented consistent pastel color scheme across all ball entry buttons:
-    - Dot balls (0): Soft gray matching legend
-    - Regular runs (1,2,3,5): Soft blue matching legend  
-    - Boundaries (4,6): Soft green matching legend
-    - Wickets (W): Soft red matching legend
-    - Extras (WD/NB): Soft orange matching legend
-    - All button colors align perfectly with tennis ball color scheme in over progress display
-    - No Ball and Wide Ball buttons positioned together as both are extras
-    - Unified grid layout with consistent button styling throughout interface
-
-- July 07, 2025. Over limit enforcement and match scorecard:
-  * Added comprehensive match scorecard below live commentary displaying:
-    - Batting statistics: runs, balls, 4s, 6s, strike rate for each batsman
-    - Bowling figures: overs, maidens, runs, wickets, economy, wides, no-balls
-    - Real-time calculation from ball-by-ball data
-    - Current batting status indicators (* for on strike, out/not out status)
-  * Implemented over limit enforcement based on "overs per side" setting:
-    - Match automatically ends when reaching over limit (e.g., 8 overs for 8-over match)
-    - "Innings Complete" alert shown when over limit reached
-    - All ball entry buttons disabled after innings completion
-    - Bowler change alerts only shown if innings not complete
-  * Enhanced match state persistence to include oversPerSide, unavailable players, and common players
-  * Fixed wicket recording flow - now properly creates ball entries for all wicket types
-  * Added professional scorecard layout matching cricket standards
-
-- July 08, 2025. Complete match state persistence and innings transitions:
-  * Implemented comprehensive match state persistence with automatic saving:
-    - Auto-saves match state after every ball entry to localStorage
-    - Saves complete game state: scores, players, overs, balls, dismissals, innings status
-    - Shows "Resume Match" dialog when returning to match tab with ongoing match
-    - Properly handles first/second innings transitions in saved state
-  * Enhanced innings transition flow:
-    - First innings completion shows "First Innings Complete" alert with score
-    - "Start Second Innings" button swaps teams and resets scoring
-    - Second innings displays first innings score for reference
-    - Match completion shows "Match Complete" alert and clears saved state
-  * Added complete match flow controls:
-    - Team swapping between innings with proper state management
-    - Player selection reset for new innings
-    - Automatic saved state cleanup on match completion
-    - Continue match option preserves all game context including common players
-
-- October 17, 2025. Mobile responsiveness and critical bug fixes:
-  * Complete mobile optimization:
-    - Fixed bottom navigation to distribute icons evenly across full width
-    - Added responsive padding and spacing throughout all pages
-    - Made ball-by-ball scoring buttons larger (3-column grid on mobile)
-    - Implemented scrollable stats tables with sticky player name column
-    - Optimized all cards, forms, and typography for mobile screens
-  * Fixed team name display to show "Team X vs Team Y" format in home page
-  * Fixed scorecard to properly separate teams and innings:
-    - Added innings tracking to all balls
-    - First innings scorecard shows separately when in second innings
-    - Both teams' stats displayed correctly with proper team names
-    - Separated batting and bowling stats by innings
-  
-  * **CRITICAL BUG FIX - Complete Database Integration**:
-    - **ROOT CAUSE**: Matches were only created in frontend memory, never saved to database
-    - **IMPACT**: All ball data was orphaned, stats never calculated, match history lost
-    
-    - **Backend Enhancements**:
-      * Created `saveBallWithContext` method that auto-creates innings/overs as needed
-      * Added `/api/balls/save-with-context` endpoint for efficient one-call ball saving
-      * Enhanced match completion to update matches_played and total_wins for all players
-      * Team wins increment when match completes with winner
-    
-    - **Frontend Fixes**:
-      * Match creation now saves to database via POST /api/matches
-      * All match players added to match_players table with correct team assignments
-      * Real database match ID used (not temporary Date.now() ID)
-      * Ball-by-ball scorer saves each ball with complete context:
-        - matchId, seriesId, innings number, over number, ball number
-        - All player IDs (striker, non-striker, bowler, fielder if applicable)
-        - Runs, wickets, extras, dismissal types
-        - Team IDs for proper innings tracking
-    
-    - **Stats Now Working**:
-      * Player stats (runs, balls, wickets, catches) update after each ball
-      * Match completion increments matches_played for all participants
-      * Winning team players get total_wins incremented
-      * Team wins tracked and displayed in series progress
-      * Match history appears in recent matches
-      * Stats page displays real-time leaderboards
-```

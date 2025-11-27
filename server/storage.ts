@@ -16,6 +16,7 @@ export interface IStorage {
   
   // Series
   getSeries(): Promise<Series[]>;
+  getSeriesById(id: number): Promise<Series | null>;
   getActiveSeries(): Promise<Series | null>;
   createSeries(series: InsertSeries): Promise<Series>;
   updateSeries(id: number, updates: Partial<InsertSeries>): Promise<Series>;
@@ -27,6 +28,7 @@ export interface IStorage {
   
   // Team Players
   getTeamPlayers(teamId: number): Promise<(TeamPlayer & { player: Player })[]>;
+  getTeamPlayersForSeries(seriesId: number): Promise<TeamPlayer[]>;
   addPlayerToTeam(teamId: number, playerId: number, seriesId: number): Promise<void>;
   removePlayerFromTeam(teamId: number, playerId: number): Promise<void>;
   
@@ -115,6 +117,11 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(series).orderBy(desc(series.createdAt));
   }
 
+  async getSeriesById(id: number): Promise<Series | null> {
+    const [s] = await db.select().from(series).where(eq(series.id, id)).limit(1);
+    return s || null;
+  }
+
   async getActiveSeries(): Promise<Series | null> {
     const [activeSeries] = await db.select().from(series).where(eq(series.isActive, true)).limit(1);
     return activeSeries || null;
@@ -154,6 +161,13 @@ export class DatabaseStorage implements IStorage {
       .innerJoin(players, eq(teamPlayers.playerId, players.id))
       .where(eq(teamPlayers.teamId, teamId))
       .then(rows => rows.map(row => ({ ...row.team_players, player: row.players })));
+  }
+
+  async getTeamPlayersForSeries(seriesId: number): Promise<TeamPlayer[]> {
+    return await db
+      .select()
+      .from(teamPlayers)
+      .where(eq(teamPlayers.seriesId, seriesId));
   }
 
   async addPlayerToTeam(teamId: number, playerId: number, seriesId: number): Promise<void> {

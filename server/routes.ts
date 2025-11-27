@@ -230,56 +230,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         // Check if series is complete (either team reached target wins)
-        const seriesData = await storage.getSeries(seriesId);
+        const seriesData = await storage.getSeriesById(seriesId);
         if (seriesData) {
-          const teams = await storage.getTeamsBySeries(seriesId);
           const targetWins = seriesData.targetWins || 13;
-          
-          // Get latest team wins
           const updatedTeams = await storage.getTeamsBySeries(seriesId);
           const winningTeam = updatedTeams.find(t => (t.wins || 0) >= targetWins);
           
           if (winningTeam) {
-            // Series is complete - update series stats for all players
-            const allSeriesPlayers = await storage.getTeamPlayers(seriesId);
+            // Series is complete - update series stats for all players who participated
+            const allSeriesPlayers = await storage.getTeamPlayersForSeries(seriesId);
             const seriesPlayers = new Set(allSeriesPlayers.map(tp => tp.playerId));
             
+            // Update each player's series stats
             for (const playerId of seriesPlayers) {
               const playerStats = await storage.getPlayerStats(playerId, seriesId);
               const currentStats = playerStats.length > 0 ? playerStats[0] : null;
               
-              if (currentStats) {
-                // Check if this player is on the winning team
-                const playerTeamPlayers = allSeriesPlayers.filter(tp => tp.playerId === playerId);
-                const isOnWinningTeam = playerTeamPlayers.some(tp => tp.teamId === winningTeam.id);
-                
-                const newSeriesWins = isOnWinningTeam 
-                  ? (currentStats.seriesWins || 0) + 1 
-                  : currentStats.seriesWins;
-                
-                await storage.updatePlayerStats(playerId, seriesId, {
-                  seriesWins: newSeriesWins,
-                });
-              }
+              // Check if this player is on the winning team
+              const isOnWinningTeam = allSeriesPlayers.some(tp => tp.playerId === playerId && tp.teamId === winningTeam.id);
+              
+              const newSeriesWins = isOnWinningTeam ? (currentStats?.seriesWins || 0) + 1 : (currentStats?.seriesWins || 0);
+              
+              await storage.updatePlayerStats(playerId, seriesId, {
+                seriesWins: newSeriesWins,
+              });
             }
             
-            // Update captain series stats if they were captain
+            // Update captain series stats for all team captains
             for (const team of updatedTeams) {
               if (team.captainId && (team.wins || 0) >= targetWins) {
                 const captainStats = await storage.getPlayerStats(team.captainId, seriesId);
                 const currentStats = captainStats.length > 0 ? captainStats[0] : null;
                 
-                if (currentStats) {
-                  await storage.updatePlayerStats(team.captainId, seriesId, {
-                    winsAsCaptain: (currentStats.winsAsCaptain || 0) + 1,
-                    captainSeriesPlayed: (currentStats.captainSeriesPlayed || 0) + 1,
-                  });
-                } else {
-                  await storage.updatePlayerStats(team.captainId, seriesId, {
-                    winsAsCaptain: 1,
-                    captainSeriesPlayed: 1,
-                  });
-                }
+                await storage.updatePlayerStats(team.captainId, seriesId, {
+                  winsAsCaptain: (currentStats?.winsAsCaptain || 0) + 1,
+                  captainSeriesPlayed: (currentStats?.captainSeriesPlayed || 0) + 1,
+                });
               }
             }
           }

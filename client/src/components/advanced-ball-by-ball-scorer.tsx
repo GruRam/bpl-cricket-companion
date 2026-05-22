@@ -44,6 +44,8 @@ interface CompletedBall {
 }
 
 export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicketDetails, savedState }: BallByBallScorerProps) {
+  const queryClient = useQueryClient();
+
   // Match state - initialize from saved state or defaults
   const [currentInnings, setCurrentInnings] = useState(savedState?.currentInnings || 1);
   const [striker, setStriker] = useState(savedState?.striker || match.striker);
@@ -69,14 +71,15 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
   const [matchWinner, setMatchWinner] = useState<{ teamName: string; margin: string } | null>(savedState?.matchWinner || null);
   const [showInningsBreak, setShowInningsBreak] = useState(savedState?.showInningsBreak || false);
   const [firstInningsScore, setFirstInningsScore] = useState<{ runs: number; wickets: number; overs: number; balls: number } | null>(savedState?.firstInningsScore || null);
-  const [pendingWicketDetails, setPendingWicketDetails] = useState<{
-    batsmanOut: string;
-    dismissalType: string;
-    fielder?: string;
-    runsScored?: number;
-  } | null>(null);
   const [showWicketModal, setShowWicketModal] = useState(false);
   const [dismissedPlayers, setDismissedPlayers] = useState<number[]>(savedState?.dismissedPlayers || []);
+
+  // Active batting/bowling teams are DERIVED from currentInnings, not stored as
+  // independent state. The match prop holds the innings-1 batting/bowling teams
+  // (set at match creation); in innings 2 the roles swap. Deriving avoids
+  // mutating the match prop (a React anti-pattern that previously lived here).
+  const activeBattingTeam = currentInnings === 1 ? match.battingTeam : match.bowlingTeam;
+  const activeBowlingTeam = currentInnings === 1 ? match.bowlingTeam : match.battingTeam;
   
   // UI state
   const [quickEntryMode, setQuickEntryMode] = useState(true);
@@ -172,16 +175,21 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
       const response = await apiRequest("POST", "/api/balls/save-with-context", ballData);
       return await response.json();
     },
+    onSuccess: (_data, variables) => {
+      // Invalidate player stats so pages like /players and /stats pick up the new ball
+      // (replaces the old refetchInterval polling on those screens).
+      queryClient.invalidateQueries({ queryKey: [`/api/series/${variables.seriesId}/stats`] });
+    },
   });
 
   // Get team players for contextual dropdowns
   const { data: battingTeamPlayers = [] } = useQuery<Player[]>({
-    queryKey: ["/api/teams", match.battingTeam.id, "players"],
+    queryKey: ["/api/teams", activeBattingTeam.id, "players"],
     select: (data: any) => data.map((tp: any) => tp.player).sort((a: Player, b: Player) => a.name.localeCompare(b.name)),
   });
 
   const { data: bowlingTeamPlayers = [] } = useQuery<Player[]>({
-    queryKey: ["/api/teams", match.bowlingTeam.id, "players"],
+    queryKey: ["/api/teams", activeBowlingTeam.id, "players"],
     select: (data: any) => data.map((tp: any) => tp.player).sort((a: Player, b: Player) => a.name.localeCompare(b.name)),
   });
 
@@ -293,55 +301,24 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
     }
   }, [totalScore]);
 
-  // Save match state to localStorage
-  useEffect(() => {
-    const matchState = {
-      striker,
-      nonStriker,
-      bowler,
-      totalScore,
-      currentOver,
-      currentBallInOver,
-      overBalls,
-      allBalls,
-      dismissedPlayers,
-      ballPosition,
-      runRate,
-      unavailablePlayers: match.unavailablePlayers,
-      commonPlayers: match.commonPlayers,
-      oversPerSide: match.oversPerSide
-    };
-    localStorage.setItem(`match_${match.id}`, JSON.stringify(matchState));
-  }, [striker, nonStriker, bowler, totalScore, currentOver, currentBallInOver, overBalls, allBalls, dismissedPlayers, ballPosition, runRate, match.id, match.unavailablePlayers, match.commonPlayers, match.oversPerSide]);
-
-  // Load match state from localStorage on component mount
-  useEffect(() => {
-    const savedState = localStorage.getItem(`match_${match.id}`);
-    if (savedState) {
-      try {
-        const state = JSON.parse(savedState);
-        setStriker(state.striker || match.striker);
-        setNonStriker(state.nonStriker || match.nonStriker);
-        setBowler(state.bowler || match.bowler);
-        setTotalScore(state.totalScore || { runs: 0, wickets: 0, overs: 0, balls: 0 });
-        setCurrentOver(state.currentOver || 1);
-        setCurrentBallInOver(state.currentBallInOver || 1);
-        setOverBalls(state.overBalls || []);
-        setAllBalls(state.allBalls || []);
-        setDismissedPlayers(state.dismissedPlayers || []);
-        setBallPosition(state.ballPosition || 1);
-        setRunRate(state.runRate || 0);
-
-      } catch (error) {
-        console.error('Error loading match state:', error);
-      }
+  /**
+   * Generate commentary for a ball.
+   * wicketDetails is passed in (not read from state) so commentary stays in sync
+   * with the wicket the user just confirmed on the same render.
+   */
+  const generateCommentary = (
+    entry: BallEntry,
+    striker: string,
+    bowler: string,
+    wicketDetails?: {
+      batsmanOut: string;
+      dismissalType: string;
+      fielder?: string;
+      runsScored?: number;
     }
-  }, [match.id]);
-
-  // Generate commentary for a ball
-  const generateCommentary = (entry: BallEntry, striker: string, bowler: string): string => {
+  ): string => {
     let commentary = `${striker} faces ${bowler}`;
-    
+
     if (entry.isWide) {
       commentary += ` - Wide ball`;
       if (entry.runs > 0) commentary += ` + ${entry.runs} run${entry.runs !== 1 ? 's' : ''}`;
@@ -349,8 +326,6 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
       commentary += ` - No ball`;
       if (entry.runs > 0) commentary += ` + ${entry.runs} run${entry.runs !== 1 ? 's' : ''}`;
     } else if (entry.isWicket) {
-      // Use pending wicket details if available, otherwise fallback to entry
-      const wicketDetails = pendingWicketDetails;
       if (wicketDetails) {
         const dismissalType = wicketDetails.dismissalType;
         const batsmanOut = wicketDetails.batsmanOut === 'striker' ? striker?.name || 'Unknown' : nonStriker?.name || 'Unknown';
@@ -378,21 +353,24 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
     return commentary;
   };
 
-  // Handle wicket details from modal
+  /**
+   * Handle wicket details submitted from the modal.
+   * Passes wicketDetails directly into handleBallEntry so the ball record sees
+   * them on the same render (previously they were stashed in state and read via
+   * closure on the next render — always null at that point).
+   */
   const handleWicketDetails = (wicketDetails: {
     batsmanOut: string;
     dismissalType: string;
     fielder?: string;
     runsScored?: number;
   }) => {
-    setPendingWicketDetails(wicketDetails);
-    
     // Add dismissed player to list
     const dismissedPlayerId = wicketDetails.batsmanOut === 'striker' ? striker?.id : nonStriker?.id;
     if (dismissedPlayerId) {
       setDismissedPlayers(prev => [...prev, dismissedPlayerId]);
     }
-    
+
     // Create a ball entry for the wicket
     const entry: BallEntry = {
       runs: wicketDetails.runsScored || 0, // Use runs scored if provided (run outs), otherwise 0
@@ -401,17 +379,29 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
       isWicket: true,
       extras: 0
     };
-    
-    // Process the ball with wicket
-    handleBallEntry(entry);
-    
+
+    // Pass wicketDetails through directly — do NOT rely on state
+    handleBallEntry(entry, wicketDetails);
+
     if (onWicketDetails) {
       onWicketDetails(wicketDetails);
     }
   };
 
-  // Handle ball entry
-  const handleBallEntry = (entry: BallEntry) => {
+  /**
+   * Handle a ball entry from any source (quick keypad, no-ball modal, wicket modal).
+   * wicketDetails (if any) is passed by the caller, never read from state, to avoid
+   * stale-closure bugs when wicket details are set immediately before this call.
+   */
+  const handleBallEntry = (
+    entry: BallEntry,
+    wicketDetails?: {
+      batsmanOut: string;
+      dismissalType: string;
+      fielder?: string;
+      runsScored?: number;
+    }
+  ) => {
     const isValidBall = !entry.isWide && !entry.isNoBall;
     const totalRuns = entry.runs + entry.extras;
     
@@ -433,7 +423,7 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
       bowler: bowler.name,
       overNumber: currentOver,
       ballPosition: ballPosition,
-      commentary: generateCommentary(entry, striker.name, bowler.name),
+      commentary: generateCommentary(entry, striker.name, bowler.name, wicketDetails),
       innings: currentInnings
     };
     
@@ -459,12 +449,12 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
         isWide: entry.isWide,
         isNoBall: entry.isNoBall,
         isWicket: entry.isWicket,
-        wicketType: entry.isWicket ? pendingWicketDetails?.dismissalType : undefined,
-        wicketPlayerId: entry.isWicket ? (pendingWicketDetails?.batsmanOut === 'striker' ? striker.id : nonStriker.id) : undefined,
-        fielderId: pendingWicketDetails?.fielder ? parseInt(pendingWicketDetails.fielder) : undefined,
+        wicketType: entry.isWicket ? wicketDetails?.dismissalType : undefined,
+        wicketPlayerId: entry.isWicket ? (wicketDetails?.batsmanOut === 'striker' ? striker.id : nonStriker.id) : undefined,
+        fielderId: wicketDetails?.fielder ? parseInt(wicketDetails.fielder) : undefined,
         extras: entry.extras,
-        battingTeamId: match.battingTeam.id,
-        bowlingTeamId: match.bowlingTeam.id,
+        battingTeamId: activeBattingTeam.id,
+        bowlingTeamId: activeBowlingTeam.id,
       });
     }
     
@@ -551,9 +541,7 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
       // Block all further ball entry until new batter is selected
       setNeedsBatsmanChange(true);
       setShowWicketModal(true);
-      // Clear pending wicket details after ball is recorded
-      setPendingWicketDetails(null);
-      
+
       // Check single batting mode after wicket
       checkSingleBattingMode();
       
@@ -657,24 +645,26 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
     mutationFn: async ({ matchId, isCompleted, winningTeamId }: { matchId: number; isCompleted: boolean; winningTeamId: number }) => {
       const response = await apiRequest('PATCH', `/api/matches/${matchId}`, { isCompleted, winningTeamId });
       return await response.json();
-    }
+    },
+    onSuccess: () => {
+      // Match completion changes series progress, recent matches, and player stats —
+      // invalidate so the home screen and players page reflect it without polling.
+      const seriesId = (activeSeries as { id?: number } | undefined)?.id;
+      if (seriesId) {
+        queryClient.invalidateQueries({ queryKey: [`/api/series/${seriesId}/progress`] });
+        queryClient.invalidateQueries({ queryKey: [`/api/series/${seriesId}/recent-matches`] });
+        queryClient.invalidateQueries({ queryKey: [`/api/series/${seriesId}/stats`] });
+      }
+    },
   });
 
   // Start second innings
   const startSecondInnings = () => {
     // Save first innings balls before clearing
     setFirstInningsBalls(allBalls);
-    
-    // Swap batting and bowling teams
-    const newBattingTeam = match.bowlingTeam;
-    const newBowlingTeam = match.battingTeam;
-    
-    // Update match object (note: this is local state, not persisted)
-    match.currentInnings = 2;
-    match.battingTeam = newBattingTeam;
-    match.bowlingTeam = newBowlingTeam;
-    
-    // Reset all game state for new innings
+
+    // Bumping currentInnings to 2 flips activeBattingTeam / activeBowlingTeam
+    // automatically (they are derived from currentInnings). No prop mutation needed.
     setCurrentInnings(2);
     setCurrentOver(1);
     setCurrentBallInOver(1);
@@ -707,7 +697,7 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <span className="text-2xl font-bold">
-              {match.battingTeam.name} vs {match.bowlingTeam.name}
+              {activeBattingTeam.name} vs {activeBowlingTeam.name}
             </span>
             <Badge variant="outline" className="text-lg px-4 py-2">
               Innings {currentInnings}
@@ -720,7 +710,7 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
             <div className="mb-4 p-3 bg-muted rounded-lg">
               <div className="text-sm text-muted-foreground mb-1">First Innings:</div>
               <div className="font-medium">
-                {match.team1.id === match.battingTeam.id ? match.team2.name : match.team1.name}: {firstInningsScore.runs}/{firstInningsScore.wickets} ({firstInningsScore.overs}.{firstInningsScore.balls} overs)
+                {match.team1.id === activeBattingTeam.id ? match.team2.name : match.team1.name}: {firstInningsScore.runs}/{firstInningsScore.wickets} ({firstInningsScore.overs}.{firstInningsScore.balls} overs)
               </div>
               {(() => {
                 const target = firstInningsScore.runs + 1;
@@ -900,7 +890,7 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
                 <span className="font-medium">First Innings Complete!</span>
               </div>
               <div className="text-sm text-blue-600 dark:text-blue-400">
-                {match.battingTeam.name} scored {totalScore.runs}/{totalScore.wickets} in {match.oversPerSide} overs
+                {activeBattingTeam.name} scored {totalScore.runs}/{totalScore.wickets} in {match.oversPerSide} overs
               </div>
               <Button
                 onClick={startSecondInnings}
@@ -926,7 +916,7 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
                 {matchWinner.teamName} {matchWinner.margin !== "" ? "wins " + matchWinner.margin : ""}
               </div>
               <div className="text-sm text-green-600 dark:text-green-400">
-                Final Score: {match.battingTeam.name} {totalScore.runs}/{totalScore.wickets} vs {firstInningsScore ? `${firstInningsScore.runs}/${firstInningsScore.wickets}` : ''}
+                Final Score: {activeBattingTeam.name} {totalScore.runs}/{totalScore.wickets} vs {firstInningsScore ? `${firstInningsScore.runs}/${firstInningsScore.wickets}` : ''}
               </div>
             </div>
           </CardContent>
@@ -1358,7 +1348,7 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
         <Card>
           <CardHeader>
             <CardTitle>
-              {match.team1.id === match.battingTeam.id 
+              {match.team1.id === activeBattingTeam.id 
                 ? `Team ${match.team2.name.replace('Team ', '').replace("'s Team", "")}`
                 : `Team ${match.team1.name.replace('Team ', '').replace("'s Team", "")}`} - Innings 1
             </CardTitle>
@@ -1512,7 +1502,7 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
       <Card>
         <CardHeader>
           <CardTitle>
-            Team {match.battingTeam.name.replace('Team ', '').replace("'s Team", "")} - Innings {currentInnings}
+            Team {activeBattingTeam.name.replace('Team ', '').replace("'s Team", "")} - Innings {currentInnings}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -1755,7 +1745,7 @@ export default function AdvancedBallByBallScorer({ match, onWicketClick, onWicke
       <WicketDetailsModal
         isOpen={showWicketModal}
         onClose={() => setShowWicketModal(false)}
-        match={match}
+        match={{ ...match, currentInnings, battingTeam: activeBattingTeam, bowlingTeam: activeBowlingTeam }}
         currentStriker={striker?.id ? { 
           id: striker.id, 
           name: striker.name, 

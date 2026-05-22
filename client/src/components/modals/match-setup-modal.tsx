@@ -158,6 +158,7 @@ export default function MatchSetupModal({ isOpen, onClose, onMatchStart, activeS
         team1Id: seriesTeams![0].id,
         team2Id: seriesTeams![1].id,
         firstBattingTeamId: battingTeam.id,
+        oversPerSide,
         isCompleted: false,
       });
 

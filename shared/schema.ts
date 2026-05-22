@@ -42,6 +42,7 @@ export const matches = pgTable("matches", {
   firstBattingTeamId: integer("first_batting_team_id").references(() => teams.id),
   winningTeamId: integer("winning_team_id").references(() => teams.id),
   isCompleted: boolean("is_completed").default(false),
+  oversPerSide: integer("overs_per_side").notNull().default(8),
   matchDate: timestamp("match_date").defaultNow(),
   createdAt: timestamp("created_at").defaultNow(),
 });

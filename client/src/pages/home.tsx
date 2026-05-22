@@ -18,16 +18,15 @@ export default function Home() {
     queryKey: ["/api/series/active"],
   });
 
+  // Polling removed (was 2s/3s) — scorer mutations invalidate these query keys directly.
   const { data: seriesProgress } = useQuery<{ team1Wins: number; team2Wins: number; team1: Team; team2: Team }>({
     queryKey: [`/api/series/${activeSeries?.id}/progress`],
     enabled: !!activeSeries?.id,
-    refetchInterval: 2000, // Update every 2 seconds for faster updates
   });
 
   const { data: recentMatches } = useQuery<Match[]>({
     queryKey: [`/api/series/${activeSeries?.id}/recent-matches`],
     enabled: !!activeSeries?.id,
-    refetchInterval: 3000, // Update every 3 seconds
   });
 
   const deleteMatchMutation = useMutation({

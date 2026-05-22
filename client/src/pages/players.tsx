@@ -41,9 +41,9 @@ export default function Players() {
     totalWins: number;
     player: Player;
   }>>({
+    // Polling removed (was 5s) — scorer's saveBallMutation invalidates this key on every ball.
     queryKey: [`/api/series/${activeSeries?.id}/stats`],
     enabled: !!activeSeries?.id,
-    refetchInterval: 5000, // Refresh every 5 seconds for real-time updates
   });
 
   const updatePlayerMutation = useMutation({

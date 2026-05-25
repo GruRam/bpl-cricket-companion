@@ -3,7 +3,7 @@ import {
   type Player, type InsertPlayer, type Series, type InsertSeries, type Team, type InsertTeam,
   type Match, type InsertMatch, type Ball, type InsertBall, type Innings, type Over,
   type PlayerStats, type TeamPlayer, type MatchPlayer
-} from "@shared/schema";
+} from "../shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
